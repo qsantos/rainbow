@@ -1,7 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/select.h>
+#include <fcntl.h>
+#include <sys/epoll.h>
 
 #include "socket.h"
 
@@ -21,36 +22,69 @@ int main(int argc, char** argv)
 	int* clients   = NULL;
 	int  n_clients = 0;
 	int  a_clients = 0;
-	int  maxfd     = server;
-	fd_set fds;
-	FD_ZERO(&fds);
+
+	int epollfd = epoll_create(10);
+	if (epollfd < 0)
+	{
+		perror("epoll_create");
+		return 1;
+	}
+
+	struct epoll_event ev;
+	ev.events = EPOLLIN;
+	ev.data.fd = server;
+	if (epoll_ctl(epollfd, EPOLL_CTL_ADD, server, &ev) < 0)
+	{
+		perror("epoll_ctl: listen_sock");
+		return 1;
+	}
+
+#define MAX_EVENTS 10
+	struct epoll_event events[MAX_EVENTS];
 	while (1)
 	{
-		FD_SET(server, &fds);
-		for (int i = 0; i < n_clients; i++)
-			FD_SET(clients[i], &fds);
-		int res = select(maxfd+1, &fds, NULL, NULL, NULL);
-
-		if (res < 0)
+		int nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
+		if (nfds == -1)
 		{
-			perror("select()");
+			perror("epoll_pwait");
 			return 1;
 		}
-		else if (FD_ISSET(server, &fds))
+		for (int n = 0; n < nfds; ++n)
 		{
-			int client = TCP_Accept(server);
-			if (client < 0)
-				continue;
-			if (n_clients >= a_clients)
+			if (events[n].data.fd == server)
 			{
-				a_clients = a_clients ? 2*a_clients : 1;
-				clients = (int*) realloc(clients, sizeof(int) * a_clients);
+				// accept client
+				int client = TCP_Accept(server);
+				if (client < 0)
+					continue;
+
+				// add socket to list
+				if (n_clients >= a_clients)
+				{
+					a_clients = a_clients ? 2*a_clients : 1;
+					clients = (int*) realloc(clients, sizeof(int) * a_clients);
+				}
+				clients[n_clients++] = client;
+
+				// non blocking socket
+				int flags = fcntl(client, F_GETFL, 0);
+				fcntl(client, F_SETFL, flags | O_NONBLOCK);
+
+				// add socket to monitor
+				ev.events = EPOLLIN | EPOLLET;
+				ev.data.fd = client;
+				if (epoll_ctl(epollfd, EPOLL_CTL_ADD, client, &ev) == -1)
+				{
+					perror("epoll_ctl: conn_sock");
+					return 1;
+				}
 			}
-			if (client > maxfd)
-				maxfd = client;
-			clients[n_clients++] = client;
+			else
+			{
+			}
 		}
 	}
+
 	close(server);
 	return 0;
 }
