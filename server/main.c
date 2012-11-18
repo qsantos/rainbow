@@ -6,6 +6,7 @@
 #include <sys/epoll.h>
 
 #include "socket.h"
+#include "md5.h"
 
 static char hex2byte(const char digit[2])
 {
@@ -22,17 +23,17 @@ int main(int argc, char** argv)
 	(void) argv;
 
 	const int n_hashes = 1;
-	const char* hex_hash = "746a8ab05d6adf52edd297676ebfadc3";
+	const char* hex_hash = "8a45d2bfc34de1dc91048f6151e31b3f";
 	char hash[16];
 	for (unsigned int i = 0; i < 16; i++)
 		hash[i] = hex2byte(hex_hash + 2*i);
 
-	const int length = 8;
-	const char* charset = "abcdefghijklmnopqrstuvwxyz";
+	const int length = 6;
+	const char* charset = "0123456789abcdefghijklmnopqrstuvwxyz";
 	const int clen = strlen(charset);
 
-	const int plen = 2;
-	char* prefix = "aa";
+	const int plen = 0;
+	char* prefix = "";
 
 	char* port = "4242";
 	int server = TCP_Listen(port);
@@ -112,7 +113,6 @@ int main(int argc, char** argv)
 			switch (message)
 			{
 			case 0x01: // REQUEST
-				printf("REQUEST\n");
 				write(fd, &n_hashes, 4);
 				write(fd, hash, 16);
 				write(fd, &length, 4);
@@ -129,20 +129,25 @@ int main(int argc, char** argv)
 				int strlength;
 				read(fd, &strlength, 4);
 
-				char* str = (char*) malloc(strlength + -1);
+				char* str = (char*) malloc(strlength + 1);
 				read(fd, str, strlength);
 				str[strlength] = 0;
 
-				printf("Found MD5(\"%s\")\n", str);
+				// check
+				char result[16];
+				MD5((uint64_t) length, (uint8_t*) str, (uint8_t*) result);
+				if (!strncmp(hash, result, 16))
+				{
+					for (int i = 0; i < 16; i++)
+						printf("%.2x", (unsigned char) hash[i]);
+					printf(" %s\n", str);
+				}
 
 				free(str);
 				break;
 			}
 			case 0x03: // DONE
-				printf("DONE\n");
 				break;
-			default:
-				printf("Got message %i\n", message);
 			}
 		}
 	}

@@ -84,14 +84,14 @@ int main(int argc, char** argv)
 			}
 
 			str[length-digit] = charset[0];
+			if (digit >= 3)
+				printf("%c%c%c%c\n", str[0], str[1], str[2], str[3]);
 			digit++;
 			if (digit > length-plen)
 			{
 				done = 1;
 				break;
 			}
-			if (digit >= 5)
-				printf("%c%c%c%c\n", str[0], str[1], str[2], str[3]);
 		}
 	}
 
