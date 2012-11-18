@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include "socket.h"
+#include "md5.h"
 
 int main(int argc, char** argv)
 {
@@ -29,8 +30,9 @@ int main(int argc, char** argv)
 	int n_hashes;
 	read(server, &n_hashes, 4);
 
-	char* hashes = (char*) malloc(16*n_hashes);
+	char* hashes = (char*) malloc(16*n_hashes+1);
 	read(server, hashes, 16*n_hashes);
+	hashes[16*n_hashes] = 0; // TODO
 
 	int length;
 	read(server, &length, 4);
@@ -45,9 +47,10 @@ int main(int argc, char** argv)
 	int plen;
 	read(server, &plen, 4);
 
-	char* str = (char*) malloc(length);
+	char* str = (char*) malloc(length + 1);
 	read(server, str, plen);
 	memset(str+plen, charset[0], length-plen);
+	str[length] = 0; // TODO
 
 	printf("Got chunk\n");
 
@@ -55,14 +58,18 @@ int main(int argc, char** argv)
 	while (!done)
 	{
 		// proceed to computations
-		if (!strcmp(str, "aabcdefg") || !strcmp(str, "aadefabc"))
+		char result[16];
+		MD5((uint64_t) length, (uint8_t*) str, (uint8_t*) result);
+		
+		// if hash found, warns server
+		if (!strncmp(result, hashes, 16))
 		{
-			char* message = (char*) malloc(34 + length);
+			char* message = (char*) malloc(24 + length);
 			*(int*)message = 0x02;
 			memcpy(message+4, hashes, 16);
 			*(int*)(message+20) = length;
-			memcpy(message+8, str, length);
-			write(server, message, 8 + length);
+			memcpy(message+24, str, length);
+			write(server, message, 24 + length);
 		}
 
 		// get next string

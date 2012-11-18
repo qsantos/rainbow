@@ -22,7 +22,7 @@ int main(int argc, char** argv)
 	(void) argv;
 
 	const int n_hashes = 1;
-	const char* hex_hash = "bc11f06afb9b27070673471a23ecc6a9";
+	const char* hex_hash = "746a8ab05d6adf52edd297676ebfadc3";
 	char hash[16];
 	for (unsigned int i = 0; i < 16; i++)
 		hash[i] = hex2byte(hex_hash + 2*i);
@@ -122,15 +122,22 @@ int main(int argc, char** argv)
 				write(fd, prefix, plen);
 				break;
 			case 0x02: // FOUND
-				printf("FOUND\n");
+			{
 				char hash[16];
 				read(fd, hash, 16);
+
 				int strlength;
 				read(fd, &strlength, 4);
-				char* str = (char*) malloc(strlength);
+
+				char* str = (char*) malloc(strlength + -1);
 				read(fd, str, strlength);
+				str[strlength] = 0;
+
+				printf("Found MD5(\"%s\")\n", str);
+
 				free(str);
 				break;
+			}
 			case 0x03: // DONE
 				printf("DONE\n");
 				break;
