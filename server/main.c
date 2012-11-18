@@ -1,15 +1,39 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/epoll.h>
 
 #include "socket.h"
 
+static char hex2byte(const char digit[2])
+{
+	char ret = 0;
+	char a = digit[0]; ret += a - (a <= '9' ? '0' : '@');
+	ret <<= 4;
+	char b = digit[0]; ret += b - (b <= '9' ? '0' : '@');
+	return ret;
+}
+
 int main(int argc, char** argv)
 {
 	(void) argc;
 	(void) argv;
+
+	const int n_hashes = 1;
+	const char* hex_hash = "bc11f06afb9b27070673471a23ecc6a9";
+	char hash[16];
+	for (unsigned int i = 0; i < 16; i++)
+		hash[i] = hex2byte(hex_hash + 2*i);
+
+	const int length = 8;
+	const char* charset = "abcdefghijklmnopqrstuvwxyz";
+	const int clen = strlen(charset);
+
+	const int plen = 2;
+	char prefix[plen];
+	memset(prefix, 0, plen);
 
 	char* port = "4242";
 	int server = TCP_Listen(port);
@@ -51,7 +75,8 @@ int main(int argc, char** argv)
 		}
 		for (int n = 0; n < nfds; ++n)
 		{
-			if (events[n].data.fd == server)
+			int fd = events[n].data.fd;
+			if (fd == server)
 			{
 				// accept client
 				int client = TCP_Accept(server);
@@ -78,9 +103,28 @@ int main(int argc, char** argv)
 					perror("epoll_ctl: client");
 					return 1;
 				}
+				continue;
 			}
-			else
+
+			int message;
+			read(fd, &message, 1);
+			switch (message)
 			{
+			case 0x01: // REQUEST
+				write(fd, &n_hashes, sizeof(int));
+				write(fd, hash, 16);
+				write(fd, &length, sizeof(int));
+				write(fd, &clen, sizeof(int));
+				write(fd, charset, clen);
+				write(fd, &plen, sizeof(int));
+				write(fd, prefix, plen);
+				break;
+			case 0x02: // FOUND
+				printf("Yeah !\n");
+				break;
+			case 0x03: // DONE
+				printf("Ok, next\n");
+				break;
 			}
 		}
 	}
