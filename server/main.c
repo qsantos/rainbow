@@ -35,7 +35,7 @@ int main(int argc, char** argv)
 	ev.data.fd = server;
 	if (epoll_ctl(epollfd, EPOLL_CTL_ADD, server, &ev) < 0)
 	{
-		perror("epoll_ctl: listen_sock");
+		perror("epoll_ctl: server");
 		return 1;
 	}
 
@@ -75,7 +75,7 @@ int main(int argc, char** argv)
 				ev.data.fd = client;
 				if (epoll_ctl(epollfd, EPOLL_CTL_ADD, client, &ev) == -1)
 				{
-					perror("epoll_ctl: conn_sock");
+					perror("epoll_ctl: client");
 					return 1;
 				}
 			}
@@ -85,6 +85,8 @@ int main(int argc, char** argv)
 		}
 	}
 
+	for (int i = 0; i < n_clients; i++)
+		close(clients[i]);
 	close(server);
 	return 0;
 }

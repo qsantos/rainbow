@@ -1,0 +1,66 @@
+==== PROTOCOL OVERVIEW ====
+
+  * the server waits for connections;
+  * a client connects to the server;
+  * when the client is ready to compute, it requests for a chunk;
+  * the server then send a chunk to the client;
+  * the client starts the computation on the chunk;
+  * when a result is positive, the client warns the server;
+  * when the client is done computing the chunk, he warns the server;
+  * the client can then proceed to request for more chunks.
+
+Every integer is stored and sent with four bytes.
+
+
+
+
+==== CLIENT MESSAGES ====
+
+== REQUEST ==
+
+To ask for a chunk, the client sends the following message:
+
+> 0x01
+
+
+== FOUND ==
+
+When the client has found a positive result, he sends:
+
+> 0x02
+> hash
+> slen
+> string
+
+Where 'hash' is the hash which has been inversed, 'slen' is the length of the original string and 'string' the string itself (not null-terminated).
+
+== DONE ==
+
+When the client is done computing his chunk, he pokes the server:
+
+> 0x03
+
+
+
+
+==== SERVER MESSAGES ====
+
+== CHUNK ==
+
+A chunck is made of four objects:
+  * a hash set
+  * a length
+  * a character set
+  * a prefix
+
+The server sends:
+
+> n_hash
+> hashes
+> length
+> clen
+> charset
+> plen
+> prefix
+
+Where 'n_hash' is the number of hashes sent, 'hashes' is an array containing the hashes to revert, 'length' is the assumed size of the original string, 'clen' is the number of elements in the character set, 'charset' is an array containing the characters to use, 'plen' is the length of the prefix and 'prefix' is the first assumed bytes of the original string.
