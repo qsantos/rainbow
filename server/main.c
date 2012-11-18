@@ -10,9 +10,9 @@
 static char hex2byte(const char digit[2])
 {
 	char ret = 0;
-	char a = digit[0]; ret += a - (a <= '9' ? '0' : '@');
+	char a = digit[0]; ret += a - (a <= '9' ? 48 : 87);
 	ret <<= 4;
-	char b = digit[0]; ret += b - (b <= '9' ? '0' : '@');
+	char b = digit[1]; ret += b - (b <= '9' ? 48 : 87);
 	return ret;
 }
 
@@ -32,8 +32,7 @@ int main(int argc, char** argv)
 	const int clen = strlen(charset);
 
 	const int plen = 2;
-	char prefix[plen];
-	memset(prefix, 0, plen);
+	char* prefix = "aa";
 
 	char* port = "4242";
 	int server = TCP_Listen(port);
@@ -83,11 +82,13 @@ int main(int argc, char** argv)
 				if (client < 0)
 					continue;
 
+				printf("Client connected\n");
+
 				// add socket to list
 				if (n_clients >= a_clients)
 				{
 					a_clients = a_clients ? 2*a_clients : 1;
-					clients = (int*) realloc(clients, sizeof(int) * a_clients);
+					clients = (int*) realloc(clients, 4 * a_clients);
 				}
 				clients[n_clients++] = client;
 
@@ -107,24 +108,27 @@ int main(int argc, char** argv)
 			}
 
 			int message;
-			read(fd, &message, 1);
+			read(fd, &message, 4);
 			switch (message)
 			{
 			case 0x01: // REQUEST
-				write(fd, &n_hashes, sizeof(int));
+				printf("REQUEST\n");
+				write(fd, &n_hashes, 4);
 				write(fd, hash, 16);
-				write(fd, &length, sizeof(int));
-				write(fd, &clen, sizeof(int));
+				write(fd, &length, 4);
+				write(fd, &clen, 4);
 				write(fd, charset, clen);
-				write(fd, &plen, sizeof(int));
+				write(fd, &plen, 4);
 				write(fd, prefix, plen);
 				break;
 			case 0x02: // FOUND
-				printf("Yeah !\n");
+				printf("FOUND\n");
 				break;
 			case 0x03: // DONE
-				printf("Ok, next\n");
+				printf("DONE\n");
 				break;
+			default:
+				printf("Got message %i\n", message);
 			}
 		}
 	}
