@@ -1,2 +1,3 @@
 *.o
-crack
+server/server
+client/client
