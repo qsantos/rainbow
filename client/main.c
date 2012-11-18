@@ -45,26 +45,38 @@ int main(int argc, char** argv)
 	int plen;
 	read(server, &plen, 4);
 
-	char* hash = (char*) malloc(length);
-	read(server, hash, plen);
-	memset(hash+plen, charset[0], length-plen);
+	char* str = (char*) malloc(length);
+	read(server, str, plen);
+	memset(str+plen, charset[0], length-plen);
 
 	printf("Got chunk\n");
 
 	char done = 0;
 	while (!done)
 	{
+		// proceed to computations
+		if (!strcmp(str, "aabcdefg") || !strcmp(str, "aadefabc"))
+		{
+			char* message = (char*) malloc(34 + length);
+			*(int*)message = 0x02;
+			memcpy(message+4, hashes, 16);
+			*(int*)(message+20) = length;
+			memcpy(message+8, str, length);
+			write(server, message, 8 + length);
+		}
+
+		// get next string
 		char digit = 1;
 		while (1)
 		{
-			char* cur = strchr(charset, hash[length-digit]);
+			char* cur = strchr(charset, str[length-digit]);
 			if (cur[1]) // if cur is not the last element of charset
 			{
-				hash[length-digit] = cur[1];
+				str[length-digit] = cur[1];
 				break;
 			}
 
-			hash[length-digit] = charset[0];
+			str[length-digit] = charset[0];
 			digit++;
 			if (digit > length-plen)
 			{
@@ -72,7 +84,7 @@ int main(int argc, char** argv)
 				break;
 			}
 			if (digit >= 5)
-				printf("%c%c%c%c\n", hash[0], hash[1], hash[2], hash[3]);
+				printf("%c%c%c%c\n", str[0], str[1], str[2], str[3]);
 		}
 	}
 

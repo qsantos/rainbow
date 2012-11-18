@@ -123,6 +123,13 @@ int main(int argc, char** argv)
 				break;
 			case 0x02: // FOUND
 				printf("FOUND\n");
+				char hash[16];
+				read(fd, hash, 16);
+				int strlength;
+				read(fd, &strlength, 4);
+				char* str = (char*) malloc(strlength);
+				read(fd, str, strlength);
+				free(str);
 				break;
 			case 0x03: // DONE
 				printf("DONE\n");
