@@ -1,3 +1,4 @@
 *.o
 server/server
 client/client
+rainbow/rainbow

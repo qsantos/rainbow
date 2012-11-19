@@ -23,12 +23,12 @@ int main(int argc, char** argv)
 	(void) argv;
 
 	const int n_hashes = 1;
-	const char* hex_hash = "8a45d2bfc34de1dc91048f6151e31b3f";
+	const char* hex_hash = "95ebc3c7b3b9f1d2c40fec14415d3cb8";
 	char hash[16];
 	for (unsigned int i = 0; i < 16; i++)
 		hash[i] = hex2byte(hex_hash + 2*i);
 
-	const int length = 6;
+	const int length = 5;
 	const char* charset = "0123456789abcdefghijklmnopqrstuvwxyz";
 	const int clen = strlen(charset);
 
