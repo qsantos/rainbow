@@ -28,7 +28,7 @@ int main(int argc, char** argv)
 	for (unsigned int i = 0; i < 16; i++)
 		hash[i] = hex2byte(hex_hash + 2*i);
 
-	const int length = 5;
+	const int length = 8;
 	const char* charset = "0123456789abcdefghijklmnopqrstuvwxyz";
 	const int clen = strlen(charset);
 

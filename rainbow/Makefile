@@ -1,7 +1,7 @@
 CFLAGS  = -Wall -Wextra -Werror -pedantic -std=c99 -O3 -D_XOPEN_SOURCE=700
 LDFLAGS = -O3 -lpthread
 TARGET  = rainbow
-SRC     = main.c md5.c
+SRC     = main.c md5.c hash.c
 OBJ     = $(SRC:.c=.o)
 
 all: $(TARGET)

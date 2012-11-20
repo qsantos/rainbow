@@ -84,8 +84,8 @@ int main(int argc, char** argv)
 			}
 
 			str[length-digit] = charset[0];
-			if (digit >= 3)
-				printf("%c%c%c%c\n", str[0], str[1], str[2], str[3]);
+			if (digit >= 4)
+				printf("%s\n", str);
 			digit++;
 			if (digit > length-plen)
 			{
