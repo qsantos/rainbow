@@ -10,7 +10,6 @@
 
 typedef struct
 {
-	char used;
 	char hash[16];
 	char str[slen];
 } Chain;
@@ -20,6 +19,7 @@ static int          clen    = 36;
 static unsigned int l_chains;
 static unsigned int n_chains;
 Chain* chains;
+char*  used;
 
 void mask(unsigned int step, char* hash, char* str)
 {
@@ -145,7 +145,7 @@ static unsigned int HashFun(const char* str, unsigned int len);
 static unsigned int HTFind(char* str)
 {
 	unsigned int cur = HashFun(str, slen) % n_chains;
-	while (chains[cur].used && bstrncmp(chains[cur].hash, str, slen) != 0)
+	while (used[cur] && bstrncmp(chains[cur].hash, str, slen) != 0)
 		if (++cur >= n_chains)
 			cur = 0;
 	return cur;
@@ -153,15 +153,18 @@ static unsigned int HTFind(char* str)
 
 int main(int argc, char** argv)
 {
-	l_chains = argc >= 2 ? atoi(argv[1]) : 100000;
-	n_chains = argc >= 3 ? atoi(argv[2]) : 10000;
+	l_chains = argc >= 2 ? atoi(argv[1]) : 10000;
+	n_chains = argc >= 3 ? atoi(argv[2]) : 1000;
 
 	chains = (Chain*) malloc(sizeof(Chain) * n_chains);
-	memset(chains, 0, sizeof(Chain) * n_chains);
+	used   = (char*)  malloc(sizeof(char)  * n_chains);
 	assert(chains);
+	assert(used);
+	memset(chains, 0, sizeof(Chain) * n_chains);
+	memset(used,   0, sizeof(char)  * n_chains);
 
-	char SP [slen];
-	char str[slen];
+	char SP  [slen];
+	char str [slen];
 	char hash[16];
 
 	unsigned int n_foundChains = 0;
@@ -182,10 +185,10 @@ int main(int argc, char** argv)
 
 		// collision detection
 		unsigned int htid = HTFind(hash);
-		Chain* c = &chains[htid];
-		if (!c->used)
+		if (!used[htid])
 		{
-			c->used = 1;
+			used[htid] = 1;
+			Chain* c = &chains[htid];
 			memcpy(c->hash, hash, 16);
 			memcpy(c->str,  SP, slen);
 			n_foundChains++;
