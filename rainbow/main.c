@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -9,32 +10,35 @@ int main(int argc, char** argv)
 	(void) argc;
 	(void) argv;
 
-	unsigned int slen = 6;
+	unsigned int slen = 5;
 	char* charset = "0123456789abcdefghijklmnopqrstuvwxyz";
 	unsigned int clen = strlen(charset);
-	unsigned int l_chains = 1000;
-	unsigned int n_chains = 1000;
+	unsigned int l_chains = 2000;
+	unsigned int n_chains = 20000;
 
+	// generate rainbow table
 	Rainbow_Init(slen, charset, l_chains, n_chains);
-
-	for (unsigned int i = 0; i < n_chains; i++)
-		Rainbow_FindChain();
-
+	unsigned int c = 0;
+	while (c < n_chains)
+		c += Rainbow_FindChain();
+	printf("Sorting chains\n");
+	Rainbow_Sort();
 	printf("Rainbow table generated\n");
 
+	// tests
 	printf("Cracking some hashes\n");
-
-	char str [slen];
+	char* str = (char*) malloc(slen);
+	memset(str, charset[0], slen);
+	str[slen] = 0;
 	char hash[16];
 	int count = 0;
-	memcpy(str, "aaaaaa", 7);
 	for (unsigned int i = 0; i < clen; i++)
 	{
 		str[0] = charset[i];
 		for (unsigned int j = 0; j < clen; j++)
 		{
 			str[1] = charset[j];
-			printf("%s (%i)\n", str, count);
+			printf("%i / %i\n", count, i*clen+j);
 			MD5(slen, (uint8_t*) str, (uint8_t*) hash);
 			if (Rainbow_Reverse(hash, NULL))
 				count++;
@@ -42,6 +46,7 @@ int main(int argc, char** argv)
 	}
 	printf("%i\n", count);
 
+	free(str);
 	Rainbow_Deinit();
 	return 0;
 }
