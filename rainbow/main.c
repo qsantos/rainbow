@@ -10,11 +10,11 @@ int main(int argc, char** argv)
 	(void) argc;
 	(void) argv;
 
-	unsigned int slen = 5;
+	unsigned int slen = 4;
 	char* charset = "0123456789abcdefghijklmnopqrstuvwxyz";
 	unsigned int clen = strlen(charset);
-	unsigned int l_chains = 2000;
-	unsigned int n_chains = 20000;
+	unsigned int l_chains = 1000;
+	unsigned int n_chains = 1000;
 
 	// generate rainbow table
 	Rainbow_Init(slen, charset, l_chains, n_chains);
