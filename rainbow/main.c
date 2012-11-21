@@ -1,29 +1,52 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
+#include <signal.h>
 
 #include "rainbow.h"
 #include "md5.h"
 
+char stop = 0;
+void signal_handler(int sig)
+{
+	(void) sig;
+	stop = 1;
+}
+
 int main(int argc, char** argv)
 {
-	(void) argc;
-	(void) argv;
+	assert(argc >= 2);
+	FILE* f = fopen(argv[1], "a+");
+	assert(f);
 
 	unsigned int slen = 4;
 	char* charset = "0123456789abcdefghijklmnopqrstuvwxyz";
 	unsigned int clen = strlen(charset);
 	unsigned int l_chains = 1000;
-	unsigned int n_chains = 1000;
+	unsigned int n_chains = 10000;
 
-	// generate rainbow table
+	// start / resume table
 	Rainbow_Init(slen, charset, l_chains, n_chains);
+	Rainbow_FromFile(f);
+	signal(SIGINT, signal_handler);
+
+	// generate more chains
+	printf("Generating chains\n");
 	unsigned int c = 0;
-	while (c < n_chains)
+	while (!stop && c < n_chains)
 		c += Rainbow_FindChain();
-	printf("Sorting chains\n");
-	Rainbow_Sort();
-	printf("Rainbow table generated\n");
+
+	if (!stop)
+	{
+		printf("Sorting table\n");
+		Rainbow_Sort();
+		printf("Done\n");
+	}
+
+
+	Rainbow_ToFile(f);
+	return 1;
 
 	// tests
 	printf("Cracking some hashes\n");
