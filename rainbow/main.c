@@ -17,18 +17,21 @@ void signal_handler(int sig)
 int main(int argc, char** argv)
 {
 	assert(argc >= 2);
-	FILE* f = fopen(argv[1], "a+");
-	assert(f);
 
 	unsigned int slen = 4;
 	char* charset = "0123456789abcdefghijklmnopqrstuvwxyz";
 	unsigned int clen = strlen(charset);
 	unsigned int l_chains = 1000;
-	unsigned int n_chains = 10000;
+	unsigned int n_chains = 1000;
 
 	// start / resume table
 	Rainbow_Init(slen, charset, l_chains, n_chains);
-	Rainbow_FromFile(f);
+	FILE* f = fopen(argv[1], "r");
+	if (f)
+	{
+		Rainbow_FromFile(f);
+		fclose(f);
+	}
 	signal(SIGINT, signal_handler);
 
 	// generate more chains
@@ -44,9 +47,11 @@ int main(int argc, char** argv)
 		printf("Done\n");
 	}
 
-
+	f = fopen(argv[1], "w");
+	assert(f);
 	Rainbow_ToFile(f);
-	return 1;
+	fclose(f);
+	return 0;
 
 	// tests
 	printf("Cracking some hashes\n");

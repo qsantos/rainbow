@@ -26,6 +26,7 @@ static char*        chains;
 static char* bufstr1;
 static char* bufstr2;
 static char* bufhash;
+static char* bufchain;
 
 static void         sort      (unsigned int left, unsigned int right);    // sort the table
 static int          binaryFind(char* hash);                               // search hash in table
@@ -43,23 +44,25 @@ void Rainbow_Init(unsigned int length, char* chars, unsigned int depth, unsigned
 	l_chains = depth;
 	n_chains = count;
 
-	chains  = (char*) malloc(sizeofChain   * n_chains);
-	bufstr1 = (char*) malloc(slen);
-	bufstr2 = (char*) malloc(slen);
-	bufhash = (char*) malloc(hlen);
+	chains   = (char*) malloc(sizeofChain   * n_chains);
+	bufstr1  = (char*) malloc(slen);
+	bufstr2  = (char*) malloc(slen);
+	bufhash  = (char*) malloc(hlen);
+	bufchain = (char*) malloc(sizeofChain);
 
 	assert(chains);
 	assert(bufstr1);
 	assert(bufstr2);
 	assert(bufhash);
 
-	memset(chains, 0, sizeofChain   * n_chains);
+	memset(chains, 0, sizeofChain * n_chains);
 
 	srandom(42);
 }
 
 void Rainbow_Deinit(void)
 {
+	free(bufchain);
 	free(bufhash);
 	free(bufstr2);
 	free(bufstr1);
@@ -188,10 +191,9 @@ void printString(char* str)
 
 static void swap(unsigned int a, unsigned int b)
 {
-	char* tmp;
-	memcpy(&tmp,                   chains + a*sizeofChain, sizeofChain);
+	memcpy(bufchain,               chains + a*sizeofChain, sizeofChain);
 	memcpy(chains + a*sizeofChain, chains + b*sizeofChain, sizeofChain);
-	memcpy(chains + b*sizeofChain, &tmp,                   sizeofChain);
+	memcpy(chains + b*sizeofChain, bufchain,               sizeofChain);
 }
 static void sort(unsigned int left, unsigned int right)
 {
