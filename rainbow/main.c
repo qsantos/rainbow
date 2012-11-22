@@ -46,7 +46,15 @@ int main(int argc, char** argv)
 		printf("Generating chains\n");
 		unsigned int c = 0;
 		while (c < n_chains)
+		{
 			c += Rainbow_FindChain();
+			if (c % 1024 == 0)
+			{
+				printf("\rProgress: %.2f%%", (float) 100 * c / n_chains);
+				fflush(stdout);
+			}
+		}
+		printf("\r");
 
 		printf("Sorting table\n");
 		Rainbow_Sort();
