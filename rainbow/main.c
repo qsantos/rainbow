@@ -93,17 +93,18 @@ int main(int argc, char** argv)
 
 			// crack the hash
 			if (Rainbow_Reverse(hash, tmp))
-				count++;
-
-			// check the cracked string
-			if (bstrncmp(str, tmp, slen))
 			{
-				printf("\r");
-				printString(str);
-				printf(" != ");
-				printString(tmp);
-				printf("\n");
-				return 1;
+				// check the cracked string
+				if (bstrncmp(str, tmp, slen))
+				{
+					printf("\r");
+					printString(str);
+					printf(" != ");
+					printString(tmp);
+					printf("\n");
+					return 1;
+				}
+				count++;
 			}
 
 			// progression
