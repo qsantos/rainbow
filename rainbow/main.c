@@ -77,7 +77,7 @@ int main(int argc, char** argv)
 		char* tmp = (char*) malloc(slen);
 		int count = 0;
 		srandom(42);
-		for (unsigned int i = 0; i < clen; i++)
+		for (unsigned int i = 0; i < 1000; i++)
 		{
 			for (unsigned int j = 0; j < slen; j++)
 				str[j] = charset[random() % clen];
@@ -96,7 +96,7 @@ int main(int argc, char** argv)
 				return 1;
 			}
 
-			printf("%i / %i\n", count, i);
+			printf("%i / %i\n", count, i+1);
 		}
 		printf("%i\n", count);
 
