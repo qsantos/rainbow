@@ -16,8 +16,8 @@ void usage(int argc, char** argv)
 		"Usage: %s file slen l_chains n_chains mode\n"
 		"\n"
 		"mode:"
-		"  rtgen\n"
-		"  tests\n"
+		"  rtgen  starts or resumes the computation of a rainbow table\n"
+		"  tests  \n"
 		,
 		argv[0]
 	);
@@ -74,21 +74,29 @@ int main(int argc, char** argv)
 
 		printf("Cracking some hashes\n");
 		char* str = (char*) malloc(slen);
-		memset(str, charset[0], slen);
-		str[slen] = 0;
-		char hash[16];
+		char* tmp = (char*) malloc(slen);
 		int count = 0;
+		srandom(42);
 		for (unsigned int i = 0; i < clen; i++)
 		{
-			str[0] = charset[i];
-			for (unsigned int j = 0; j < clen; j++)
+			for (unsigned int j = 0; j < slen; j++)
+				str[j] = charset[random() % clen];
+
+			char hash[16];
+			MD5(slen, (uint8_t*) str, (uint8_t*) hash);
+			if (Rainbow_Reverse(hash, tmp))
+				count++;
+
+			if (bstrncmp(str, tmp, slen))
 			{
-				str[1] = charset[j];
-				printf("%i / %i\n", count, i*clen+j);
-				MD5(slen, (uint8_t*) str, (uint8_t*) hash);
-				if (Rainbow_Reverse(hash, NULL))
-					count++;
+				printString(str);
+				printf(" != ");
+				printString(tmp);
+				printf("\n");
+				return 1;
 			}
+
+			printf("%i / %i\n", count, i);
 		}
 		printf("%i\n", count);
 
