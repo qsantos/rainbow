@@ -124,20 +124,23 @@ void Rainbow_Print(void)
 
 char Rainbow_Reverse(char* target, char* dest)
 {
-	int res = 0;
+	// test for every distance to the end point
 	for (unsigned int firstStep = l_chains; firstStep >= 1; firstStep--)
 	{
+		// get the end point hash
 		memcpy(bufhash, target, hlen);
 		for (unsigned int step = firstStep; step < l_chains; step++)
 		{
 			mask(step, bufhash, bufstr1);
 			MD5((uint64_t) slen, (uint8_t*) bufstr1, (uint8_t*) bufhash);
 		}
-		res = binaryFind(bufhash);
 
+		// find the hash's chain
+		int res = binaryFind(bufhash);
 		if (res < 0)
 			continue;
 
+		// get the previous string
 		memcpy(bufstr1, CSTR(res), slen);
 		MD5((uint64_t) slen, (uint8_t*) bufstr1, (uint8_t*) bufhash);
 		unsigned int step = 1;
