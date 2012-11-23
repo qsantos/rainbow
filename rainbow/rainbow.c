@@ -88,7 +88,7 @@ char Rainbow_FindChain(void)
 	if (!CACTIVE(htid))
 	{
 		CACTIVE(htid) = 1;
-		memcpy(CHASH(htid),    bufhash, hlen);
+		memcpy(CHASH(htid), bufhash, hlen);
 		memcpy(CSTR (htid), bufstr1, slen);
 		return 1;
 	}
@@ -168,10 +168,10 @@ void hex2hash(char* hex, char* hash)
 {
 	for (unsigned int i = 0; i < hlen; i++)
 	{
-		*hash = *hex - (*hex < '9' ? '0' : 86);
+		*hash  = *hex - (*hex <= '9' ? '0' : 87);
 		hex++;
 		*hash *= 16;
-		*hash += *hex - (*hex < '9' ? '0' : 87);
+		*hash += *hex - (*hex <= '9' ? '0' : 87);
 		hex++;
 		hash++;
 	}

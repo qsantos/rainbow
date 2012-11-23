@@ -75,14 +75,22 @@ int main(int argc, char** argv)
 		printf("Cracking some hashes\n");
 		char* str = (char*) malloc(slen);
 		char* tmp = (char*) malloc(slen);
+		char hash[16];
+
+		hex2hash("1be2e5220ecf25259f967cfecbd731bb", hash);
+		Rainbow_Reverse(hash, tmp);
+		printString(tmp);
+		printf("\n");
+
 		int count = 0;
 		srandom(42);
 		for (unsigned int i = 0; i < 1000; i++)
 		{
 			for (unsigned int j = 0; j < slen; j++)
 				str[j] = charset[random() % clen];
+			printString(str);
+			printf("\n");
 
-			char hash[16];
 			MD5(slen, (uint8_t*) str, (uint8_t*) hash);
 			if (Rainbow_Reverse(hash, tmp))
 				count++;
