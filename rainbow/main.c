@@ -13,11 +13,12 @@ void usage(int argc, char** argv)
 
 	printf
 	(
-		"Usage: %s file slen l_chains n_chains mode\n"
+		"Usage: %s file slen l_chains n_chains mode [PARAM]\n"
 		"\n"
 		"mode:"
 		"  rtgen  starts or resumes the computation of a rainbow table\n"
-		"  tests  \n"
+		"  tests  runs cracking tests on PARAM random strings (default: 1000)\n"
+		"  crack  tries to crack PARAM (PARAM is requisite)\n"
 		,
 		argv[0]
 	);
@@ -38,6 +39,7 @@ int main(int argc, char** argv)
 	unsigned int l_chains = atoi(argv[3]);
 	unsigned int n_chains = atoi(argv[4]);
 	char*        mode     = argv[5];
+	char*        param    = argc >= 7 ? argv[6] : NULL;
 
 	Rainbow_Init(slen, charset, l_chains, n_chains);
 	if (!strcmp(mode, "rtgen"))
@@ -77,9 +79,10 @@ int main(int argc, char** argv)
 		char* tmp = (char*) malloc(slen);
 		char hash[16];
 
-		int count = 0;
+		unsigned int count = 0;
 		srandom(42);
-		for (unsigned int i = 0; i < 1000; i++)
+		unsigned int n_tests = param ? atoi(param) : 1000;
+		for (unsigned int i = 0; i < n_tests; i++)
 		{
 			// generate random string
 			for (unsigned int j = 0; j < slen; j++)
@@ -95,6 +98,7 @@ int main(int argc, char** argv)
 			// check the cracked string
 			if (bstrncmp(str, tmp, slen))
 			{
+				printf("\r");
 				printString(str);
 				printf(" != ");
 				printString(tmp);
@@ -103,13 +107,50 @@ int main(int argc, char** argv)
 			}
 
 			// progression
-			printf("\r%i / %i", count, i+1);
+			printf("\r");
+			printString(str);
+			printf("  %i / %i", count, i+1);
 			fflush(stdout);
 		}
 		printf("\n");
 
 		free(str);
 	}
+	else if (!strcmp(mode, "crack"))
+	{
+		if (!param)
+		{
+			usage(argc, argv);
+			Rainbow_Deinit();
+			return 1;
+		}
+
+		FILE* f = fopen(filename, "r");
+		assert(f);
+		Rainbow_FromFile(f);
+		fclose(f);
+
+		char* str = (char*) malloc(slen);
+		char  hash[16];
+
+		hex2hash(param, hash);
+		int res = Rainbow_Reverse(hash, str);
+
+		if (res)
+		{
+			printHash(hash);
+			printf(" ");
+			printString(str);
+			printf("\n");
+		}
+		else
+		{
+			fprintf(stderr, "Could not reverse hash\n");
+			Rainbow_Deinit();
+			return 1;
+		}
+	}
+
 	Rainbow_Deinit();
 	return 0;
 }
