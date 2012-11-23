@@ -80,7 +80,7 @@ int main(int argc, char** argv)
 		char hash[16];
 
 		unsigned int count = 0;
-		srandom(42);
+		srandom(17);
 		unsigned int n_tests = param ? atoi(param) : 1000;
 		for (unsigned int i = 0; i < n_tests; i++)
 		{
