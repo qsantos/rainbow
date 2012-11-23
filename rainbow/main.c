@@ -77,24 +77,22 @@ int main(int argc, char** argv)
 		char* tmp = (char*) malloc(slen);
 		char hash[16];
 
-		hex2hash("1be2e5220ecf25259f967cfecbd731bb", hash);
-		Rainbow_Reverse(hash, tmp);
-		printString(tmp);
-		printf("\n");
-
 		int count = 0;
 		srandom(42);
 		for (unsigned int i = 0; i < 1000; i++)
 		{
+			// generate random string
 			for (unsigned int j = 0; j < slen; j++)
 				str[j] = charset[random() % clen];
-			printString(str);
-			printf("\n");
 
+			// hash it
 			MD5(slen, (uint8_t*) str, (uint8_t*) hash);
+
+			// crack the hash
 			if (Rainbow_Reverse(hash, tmp))
 				count++;
 
+			// check the cracked string
 			if (bstrncmp(str, tmp, slen))
 			{
 				printString(str);
@@ -104,9 +102,11 @@ int main(int argc, char** argv)
 				return 1;
 			}
 
-			printf("%i / %i\n", count, i+1);
+			// progression
+			printf("\r%i / %i", count, i+1);
+			fflush(stdout);
 		}
-		printf("%i\n", count);
+		printf("\n");
 
 		free(str);
 	}
