@@ -7,6 +7,11 @@
 #include "rainbow.h"
 #include "md5.h"
 
+static void rewriteLine(void)
+{
+	printf("\r\33[K");
+}
+
 void usage(int argc, char** argv)
 {
 	(void) argc;
@@ -52,11 +57,12 @@ int main(int argc, char** argv)
 			c += Rainbow_FindChain();
 			if (c % 1024 == 0)
 			{
-				printf("\rProgress: %.2f%%", (float) 100 * c / n_chains);
+				rewriteLine();
+				printf("Progress: %.2f%%", (float) 100 * c / n_chains);
 				fflush(stdout);
 			}
 		}
-		printf("\r");
+		rewriteLine();
 
 		printf("Sorting table\n");
 		Rainbow_Sort();
@@ -97,7 +103,7 @@ int main(int argc, char** argv)
 				// check the cracked string
 				if (bstrncmp(str, tmp, slen))
 				{
-					printf("\r");
+					rewriteLine();
 					printString(str);
 					printf(" != ");
 					printString(tmp);
@@ -108,7 +114,7 @@ int main(int argc, char** argv)
 			}
 
 			// progression
-			printf("\r");
+			rewriteLine();
 			printString(str);
 			printf("  %i / %i", count, i+1);
 			fflush(stdout);
