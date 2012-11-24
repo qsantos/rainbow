@@ -26,9 +26,11 @@ static void usage(int argc, char** argv)
 		"  a_chains  allocate space for 'a_chains' chains\n"
 		"\n"
 		"mode:"
-		"  rtgen  starts/resumes the computation of a rainbow table\n"
-		"  tests  runs cracking tests on PARAM random strings (default: 1000)\n"
-		"  crack  tries to crack PARAM (PARAM is requisite)\n"
+		"  rtgen  g  starts/resumes the computation of a rainbow table\n"
+		"            NOTE: you must use the same parameters for resuming\n"
+		"  rtnew  n  forces to start a new rainbow (ignore existing file)\n"
+		"  tests  t  runs cracking tests on PARAM random strings (default: 1000)\n"
+		"  crack  c  tries to crack PARAM (PARAM is requisite)\n"
 		,
 		argv[0]
 	);
@@ -40,6 +42,14 @@ static void stopGenerating(int signal)
 	(void) signal;
 	generate = 0;
 }
+
+typedef enum
+{
+	RTGEN,
+	RTNEW,
+	TESTS,
+	CRACK,
+} Mode;
 
 int main(int argc, char** argv)
 {
@@ -55,23 +65,45 @@ int main(int argc, char** argv)
 	unsigned int clen     = strlen(charset);
 	unsigned int l_chains = atoi(argv[3]);
 	unsigned int a_chains = atoi(argv[4]);
-	char*        mode     = argv[5];
+	char*        modestr  = argv[5];
 	char*        param    = argc >= 7 ? argv[6] : NULL;
 
-	Rainbow_Init(slen, charset, l_chains, a_chains);
-	signal(SIGINT, stopGenerating);
-
-	if (!strcmp(mode, "rtgen"))
+	Mode mode;
+	if (!strcmp(modestr, "rtgen") || !strcmp(modestr, "g"))
+		mode = RTGEN;
+	else if (!strcmp(modestr, "rtnew") || !strcmp(modestr, "n"))
+		mode = RTNEW;
+	else if (!strcmp(modestr, "tests") || !strcmp(modestr, "t"))
+		mode = TESTS;
+	else if (!strcmp(modestr, "crack") || !strcmp(modestr, "c"))
+		mode = CRACK;
+	else
 	{
-		FILE* src = fopen(filename, "r");
-		if (src)
+		fprintf(stderr, "Invalid mode '%s'\n", modestr);
+		return 1;
+	}
+
+	Rainbow_Init(slen, charset, l_chains, a_chains);
+
+	FILE* f;
+	char* str = (char*) malloc(slen);
+	char* tmp = (char*) malloc(slen);
+	char hash[16];
+
+	switch (mode)
+	{
+	case RTGEN:
+		f = fopen(filename, "r");
+		if (f)
 		{
-			Rainbow_FromFile(src);
-			fclose(src);
+			Rainbow_FromFile(f);
+			fclose(f);
 		}
 
+	case RTNEW: // skip file loading
 		// generate more chains
 		printf("Generating chains\n");
+		signal(SIGINT, stopGenerating);
 		while (generate && n_chains < a_chains)
 		{
 			Rainbow_FindChain();
@@ -93,22 +125,19 @@ int main(int argc, char** argv)
 		else
 			printf("Pausing table generation\n");
 
-		FILE* dst = fopen(filename, "w");
-		assert(dst);
-		Rainbow_ToFile(dst);
-		fclose(dst);
-	}
-	else if (!strcmp(mode, "tests"))
-	{
-		FILE* f = fopen(filename, "r");
+		f = fopen(filename, "w");
+		assert(f);
+		Rainbow_ToFile(f);
+		fclose(f);
+		break;
+
+	case TESTS:
+		f = fopen(filename, "r");
 		assert(f);
 		Rainbow_FromFile(f);
 		fclose(f);
 
 		printf("Cracking some hashes\n");
-		char* str = (char*) malloc(slen);
-		char* tmp = (char*) malloc(slen);
-		char hash[16];
 
 		unsigned int count = 0;
 		srandom(17);
@@ -146,10 +175,9 @@ int main(int argc, char** argv)
 		}
 		printf("\n");
 
-		free(str);
-	}
-	else if (!strcmp(mode, "crack"))
-	{
+		break;
+
+	case CRACK:
 		if (!param)
 		{
 			usage(argc, argv);
@@ -157,13 +185,10 @@ int main(int argc, char** argv)
 			return 1;
 		}
 
-		FILE* f = fopen(filename, "r");
+		f = fopen(filename, "r");
 		assert(f);
 		Rainbow_FromFile(f);
 		fclose(f);
-
-		char* str = (char*) malloc(slen);
-		char  hash[16];
 
 		hex2hash(param, hash);
 		int res = Rainbow_Reverse(hash, str);
@@ -181,8 +206,12 @@ int main(int argc, char** argv)
 			Rainbow_Deinit();
 			return 1;
 		}
+
+		break;
 	}
 
+	free(tmp);
+	free(str);
 	Rainbow_Deinit();
 	return 0;
 }
