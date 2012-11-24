@@ -18,10 +18,15 @@ static void usage(int argc, char** argv)
 
 	printf
 	(
-		"Usage: %s file slen l_chains n_chains mode [PARAM]\n"
+		"Usage: %s file slen l_chains a_chains mode [PARAM]\n"
+		"\n"
+		"  file      file where to store/load the rainbow table\n"
+		"  slen      length of the non-hashed string / key\n"
+		"  l_chains  length of the chains to generate\n"
+		"  a_chains  allocate space for 'a_chains' chains\n"
 		"\n"
 		"mode:"
-		"  rtgen  starts or resumes the computation of a rainbow table\n"
+		"  rtgen  starts/resumes the computation of a rainbow table\n"
 		"  tests  runs cracking tests on PARAM random strings (default: 1000)\n"
 		"  crack  tries to crack PARAM (PARAM is requisite)\n"
 		,
@@ -42,22 +47,22 @@ int main(int argc, char** argv)
 	unsigned int slen     = atoi(argv[2]);
 	unsigned int clen     = strlen(charset);
 	unsigned int l_chains = atoi(argv[3]);
-	unsigned int n_chains = atoi(argv[4]);
+	unsigned int a_chains = atoi(argv[4]);
 	char*        mode     = argv[5];
 	char*        param    = argc >= 7 ? argv[6] : NULL;
 
-	Rainbow_Init(slen, charset, l_chains, n_chains);
+	Rainbow_Init(slen, charset, l_chains, a_chains);
 	if (!strcmp(mode, "rtgen"))
 	{
 		// generate more chains
 		printf("Generating chains\n");
-		while (a_chains < n_chains)
+		while (n_chains < a_chains)
 		{
 			Rainbow_FindChain();
-			if (a_chains % 1024 == 0)
+			if (n_chains % 1024 == 0)
 			{
 				rewriteLine();
-				printf("Progress: %.2f%%", (float) 100 * a_chains / n_chains);
+				printf("Progress: %.2f%%", (float) 100 * n_chains / a_chains);
 				fflush(stdout);
 			}
 		}

@@ -15,7 +15,7 @@
 #define   CHASH(I) (chains + (I)*sizeofChain + 1)
 #define    CSTR(I) (chains + (I)*sizeofChain + 1 + hlen)
 
-unsigned int a_chains;
+unsigned int n_chains;
 
 static unsigned int hlen;
 static unsigned int slen;
@@ -23,7 +23,7 @@ static unsigned int sizeofChain;
 static char*        charset;
 static unsigned int clen;
 static unsigned int l_chains;
-static unsigned int n_chains;
+static unsigned int a_chains;
 static char*        chains;
 
 static char* bufstr1;
@@ -38,7 +38,7 @@ static unsigned int HTFind    (char* str);                                // Has
 
 void Rainbow_Init(unsigned int length, char* chars, unsigned int depth, unsigned int count)
 {
-	a_chains = 0;
+	n_chains = 0;
 
 	hlen = 16;
 	slen = length;
@@ -47,9 +47,9 @@ void Rainbow_Init(unsigned int length, char* chars, unsigned int depth, unsigned
 	charset  = strdup(chars);
 	clen     = strlen(chars);
 	l_chains = depth;
-	n_chains = count;
+	a_chains = count;
 
-	chains   = (char*) malloc(sizeofChain   * n_chains);
+	chains   = (char*) malloc(sizeofChain   * a_chains);
 	bufstr1  = (char*) malloc(slen);
 	bufstr2  = (char*) malloc(slen);
 	bufhash  = (char*) malloc(hlen);
@@ -60,7 +60,7 @@ void Rainbow_Init(unsigned int length, char* chars, unsigned int depth, unsigned
 	assert(bufstr2);
 	assert(bufhash);
 
-	memset(chains, 0, sizeofChain * n_chains);
+	memset(chains, 0, sizeofChain * a_chains);
 
 	srandom(time(NULL));
 }
@@ -95,7 +95,7 @@ char Rainbow_FindChain(void)
 		CACTIVE(htid) = 1;
 		memcpy(CHASH(htid), bufhash, hlen);
 		memcpy(CSTR (htid), bufstr1, slen);
-		a_chains++;
+		n_chains++;
 		return 1;
 	}
 
@@ -104,26 +104,26 @@ char Rainbow_FindChain(void)
 
 void Rainbow_Sort(void)
 {
-	sort(0, n_chains-1);
+	sort(0, a_chains-1);
 }
 
 void Rainbow_ToFile(FILE* f)
 {
-	fwrite(chains, sizeofChain, n_chains, f);
+	fwrite(chains, sizeofChain, a_chains, f);
 }
 
 void Rainbow_FromFile(FILE* f)
 {
-	fread(chains, sizeofChain, n_chains, f);
-	a_chains = 0;
-	for (unsigned int i = 0; i < n_chains; i++)
+	fread(chains, sizeofChain, a_chains, f);
+	n_chains = 0;
+	for (unsigned int i = 0; i < a_chains; i++)
 		if (CACTIVE(i))
-			a_chains++;
+			n_chains++;
 }
 
 void Rainbow_Print(void)
 {
-	for (unsigned int i = 0; i < n_chains; i++)
+	for (unsigned int i = 0; i < a_chains; i++)
 	{
 		printHash(CHASH(i));
 		printf(" ");
@@ -229,7 +229,7 @@ static void sort(unsigned int left, unsigned int right)
 static int binaryFind(char* hash)
 {
 	unsigned int start = 0;
-	unsigned int end   = n_chains-1;
+	unsigned int end   = a_chains-1;
 	while (start != end)
 	{
 		unsigned int middle = (start + end) / 2;
@@ -254,9 +254,9 @@ static void mask(unsigned int step, char* hash, char* str)
 static unsigned int HashFun(const char* str, unsigned int len);
 static unsigned int HTFind(char* str)
 {
-	unsigned int cur = HashFun(str, slen) % n_chains;
+	unsigned int cur = HashFun(str, slen) % a_chains;
 	while (CACTIVE(cur) && bstrncmp(CHASH(cur), str, slen) != 0)
-		if (++cur >= n_chains)
+		if (++cur >= a_chains)
 			cur = 0;
 	return cur;
 }

@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 // number of currently active chains
-extern unsigned int a_chains;
+extern unsigned int n_chains;
 
 // generation
 void Rainbow_Init     (unsigned int length, char* chars, unsigned int depth, unsigned int count);
