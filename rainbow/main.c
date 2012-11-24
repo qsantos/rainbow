@@ -34,6 +34,13 @@ static void usage(int argc, char** argv)
 	);
 }
 
+static char generate = 1;
+static void stopGenerating(int signal)
+{
+	(void) signal;
+	generate = 0;
+}
+
 int main(int argc, char** argv)
 {
 	if (argc < 6)
@@ -52,11 +59,20 @@ int main(int argc, char** argv)
 	char*        param    = argc >= 7 ? argv[6] : NULL;
 
 	Rainbow_Init(slen, charset, l_chains, a_chains);
+	signal(SIGINT, stopGenerating);
+
 	if (!strcmp(mode, "rtgen"))
 	{
+		FILE* src = fopen(filename, "r");
+		if (src)
+		{
+			Rainbow_FromFile(src);
+			fclose(src);
+		}
+
 		// generate more chains
 		printf("Generating chains\n");
-		while (n_chains < a_chains)
+		while (generate && n_chains < a_chains)
 		{
 			Rainbow_FindChain();
 			if (n_chains % 1024 == 0)
@@ -68,14 +84,19 @@ int main(int argc, char** argv)
 		}
 		rewriteLine();
 
-		printf("Sorting table\n");
-		Rainbow_Sort();
-		printf("Done\n");
+		if (generate)
+		{
+			printf("Sorting table\n");
+			Rainbow_Sort();
+			printf("Done\n");
+		}
+		else
+			printf("Pausing table generation\n");
 
-		FILE* f = fopen(filename, "w");
-		assert(f);
-		Rainbow_ToFile(f);
-		fclose(f);
+		FILE* dst = fopen(filename, "w");
+		assert(dst);
+		Rainbow_ToFile(dst);
+		fclose(dst);
 	}
 	else if (!strcmp(mode, "tests"))
 	{
