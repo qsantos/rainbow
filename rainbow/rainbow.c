@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <time.h>
 
 #include "md5.h"
 
@@ -57,7 +58,7 @@ void Rainbow_Init(unsigned int length, char* chars, unsigned int depth, unsigned
 
 	memset(chains, 0, sizeofChain * n_chains);
 
-	srandom(42);
+	srandom(time(NULL));
 }
 
 void Rainbow_Deinit(void)
