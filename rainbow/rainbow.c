@@ -15,6 +15,8 @@
 #define   CHASH(I) (chains + (I)*sizeofChain + 1)
 #define    CSTR(I) (chains + (I)*sizeofChain + 1 + hlen)
 
+unsigned int a_chains;
+
 static unsigned int hlen;
 static unsigned int slen;
 static unsigned int sizeofChain;
@@ -36,6 +38,8 @@ static unsigned int HTFind    (char* str);                                // Has
 
 void Rainbow_Init(unsigned int length, char* chars, unsigned int depth, unsigned int count)
 {
+	a_chains = 0;
+
 	hlen = 16;
 	slen = length;
 	sizeofChain = 1 + hlen + slen;
@@ -91,6 +95,7 @@ char Rainbow_FindChain(void)
 		CACTIVE(htid) = 1;
 		memcpy(CHASH(htid), bufhash, hlen);
 		memcpy(CSTR (htid), bufstr1, slen);
+		a_chains++;
 		return 1;
 	}
 
@@ -110,6 +115,10 @@ void Rainbow_ToFile(FILE* f)
 void Rainbow_FromFile(FILE* f)
 {
 	fread(chains, sizeofChain, n_chains, f);
+	a_chains = 0;
+	for (unsigned int i = 0; i < n_chains; i++)
+		if (CACTIVE(i))
+			a_chains++;
 }
 
 void Rainbow_Print(void)

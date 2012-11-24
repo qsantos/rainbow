@@ -51,14 +51,13 @@ int main(int argc, char** argv)
 	{
 		// generate more chains
 		printf("Generating chains\n");
-		unsigned int c = 0;
-		while (c < n_chains)
+		while (a_chains < n_chains)
 		{
-			c += Rainbow_FindChain();
-			if (c % 1024 == 0)
+			Rainbow_FindChain();
+			if (a_chains % 1024 == 0)
 			{
 				rewriteLine();
-				printf("Progress: %.2f%%", (float) 100 * c / n_chains);
+				printf("Progress: %.2f%%", (float) 100 * a_chains / n_chains);
 				fflush(stdout);
 			}
 		}
