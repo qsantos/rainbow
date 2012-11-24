@@ -31,6 +31,7 @@ static void usage(int argc, char** argv)
 		"  rtnew  n  forces to start a new table (ignore existing file)\n"
 		"  merge  m  merges with another table (PARAM: file2 a_chains2)\n"
 		"            NOTE: the two table must be sorted ('Done' message)\n"
+		"            EXPERIMENTAL\n"
 		"  tests  t  runs cracking tests on PARAM random strings (default: 1000)\n"
 		"  crack  c  tries to crack PARAM (PARAM is requisite)\n"
 		,
@@ -141,6 +142,8 @@ int main(int argc, char** argv)
 		break;
 
 	case MERGE:
+		fprintf(stderr, "WARNING: this feature is experimental\n");
+
 		if (!param1 || !param2)
 		{
 			fprintf(stderr, "Second table information not supplied\n");
@@ -148,14 +151,14 @@ int main(int argc, char** argv)
 			usage(argc, argv);
 			return 1;
 		}
-		unsigned int a_chains2 = atoi(param1);
+		unsigned int a_chains2 = atoi(param2);
 
 		// resize global table
 		chains = (char*) realloc(chains, (a_chains+a_chains2) * sizeofChain);
 		assert(chains);
 
 		// load second table
-		f = fopen(param2, "r");
+		f = fopen(param1, "r");
 		assert(f);
 		fread(chains + a_chains*sizeofChain, sizeofChain, a_chains2, f);
 		fclose(f);
