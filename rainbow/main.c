@@ -12,7 +12,7 @@ static void rewriteLine(void)
 	printf("\r\33[K");
 }
 
-void usage(int argc, char** argv)
+static void usage(int argc, char** argv)
 {
 	(void) argc;
 
