@@ -16,15 +16,15 @@
 #define    CSTR(I) (chains + (I)*sizeofChain + 1 + hlen)
 
 unsigned int n_chains;
+unsigned int a_chains;
+unsigned int sizeofChain;
+char*        chains;
 
 static unsigned int hlen;
 static unsigned int slen;
-static unsigned int sizeofChain;
 static char*        charset;
 static unsigned int clen;
 static unsigned int l_chains;
-static unsigned int a_chains;
-static char*        chains;
 
 static char* bufstr1;
 static char* bufstr2;

@@ -28,7 +28,9 @@ static void usage(int argc, char** argv)
 		"mode:"
 		"  rtgen  g  starts/resumes the computation of a rainbow table\n"
 		"            NOTE: you must use the same parameters for resuming\n"
-		"  rtnew  n  forces to start a new rainbow (ignore existing file)\n"
+		"  rtnew  n  forces to start a new table (ignore existing file)\n"
+		"  merge  m  merges with another table (PARAM: file2 a_chains2)\n"
+		"            NOTE: the two table must be sorted ('Done' message)\n"
 		"  tests  t  runs cracking tests on PARAM random strings (default: 1000)\n"
 		"  crack  c  tries to crack PARAM (PARAM is requisite)\n"
 		,
@@ -47,6 +49,7 @@ typedef enum
 {
 	RTGEN,
 	RTNEW,
+	MERGE,
 	TESTS,
 	CRACK,
 } Mode;
@@ -66,13 +69,16 @@ int main(int argc, char** argv)
 	unsigned int l_chains = atoi(argv[3]);
 	unsigned int a_chains = atoi(argv[4]);
 	char*        modestr  = argv[5];
-	char*        param    = argc >= 7 ? argv[6] : NULL;
+	char*        param1   = argc >= 7 ? argv[6] : NULL;
+	char*        param2   = argc >= 8 ? argv[7] : NULL;
 
 	Mode mode;
 	if (!strcmp(modestr, "rtgen") || !strcmp(modestr, "g"))
 		mode = RTGEN;
 	else if (!strcmp(modestr, "rtnew") || !strcmp(modestr, "n"))
 		mode = RTNEW;
+	else if (!strcmp(modestr, "merge") || !strcmp(modestr, "m"))
+		mode = MERGE;
 	else if (!strcmp(modestr, "tests") || !strcmp(modestr, "t"))
 		mode = TESTS;
 	else if (!strcmp(modestr, "crack") || !strcmp(modestr, "c"))
@@ -93,6 +99,7 @@ int main(int argc, char** argv)
 	switch (mode)
 	{
 	case RTGEN:
+		// load table
 		f = fopen(filename, "r");
 		if (f)
 		{
@@ -116,6 +123,7 @@ int main(int argc, char** argv)
 		}
 		rewriteLine();
 
+		// finish generation
 		if (generate)
 		{
 			printf("Sorting table\n");
@@ -125,6 +133,38 @@ int main(int argc, char** argv)
 		else
 			printf("Pausing table generation\n");
 
+		// save table
+		f = fopen(filename, "w");
+		assert(f);
+		Rainbow_ToFile(f);
+		fclose(f);
+		break;
+
+	case MERGE:
+		if (!param1 || !param2)
+		{
+			fprintf(stderr, "Second table information not supplied\n");
+			fprintf(stderr, "\n");
+			usage(argc, argv);
+			return 1;
+		}
+		unsigned int a_chains2 = atoi(param1);
+
+		// resize global table
+		chains = (char*) realloc(chains, (a_chains+a_chains2) * sizeofChain);
+		assert(chains);
+
+		// load second table
+		f = fopen(param2, "r");
+		assert(f);
+		fread(chains + a_chains*sizeofChain, sizeofChain, a_chains2, f);
+		fclose(f);
+
+		// sort-merge
+		a_chains += a_chains2;
+		Rainbow_Sort();
+
+		// save merged table
 		f = fopen(filename, "w");
 		assert(f);
 		Rainbow_ToFile(f);
@@ -132,6 +172,7 @@ int main(int argc, char** argv)
 		break;
 
 	case TESTS:
+		// load table
 		f = fopen(filename, "r");
 		assert(f);
 		Rainbow_FromFile(f);
@@ -141,7 +182,7 @@ int main(int argc, char** argv)
 
 		unsigned int count = 0;
 		srandom(17);
-		unsigned int n_tests = param ? atoi(param) : 1000;
+		unsigned int n_tests = param1 ? atoi(param1) : 1000;
 		for (unsigned int i = 0; i < n_tests; i++)
 		{
 			// generate random string
@@ -178,19 +219,23 @@ int main(int argc, char** argv)
 		break;
 
 	case CRACK:
-		if (!param)
+		if (!param1)
 		{
+			fprintf(stderr, "Hash not supplied\n");
+			fprintf(stderr, "\n");
 			usage(argc, argv);
 			Rainbow_Deinit();
 			return 1;
 		}
 
+		// load table
 		f = fopen(filename, "r");
 		assert(f);
 		Rainbow_FromFile(f);
 		fclose(f);
 
-		hex2hash(param, hash);
+		// try and crack hash
+		hex2hash(param1, hash);
 		int res = Rainbow_Reverse(hash, str);
 
 		if (res)

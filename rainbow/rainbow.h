@@ -3,8 +3,10 @@
 
 #include <stdio.h>
 
-// number of currently active chains
-extern unsigned int n_chains;
+extern unsigned int n_chains;    // number of currently active chains
+extern unsigned int a_chains;    // space available for 'a_chains' chains
+extern unsigned int sizeofChain; // memory size of a chain
+extern char*        chains;      // rainbow table (chain array)
 
 // generation
 void Rainbow_Init     (unsigned int length, char* chars, unsigned int depth, unsigned int count);
