@@ -11,10 +11,10 @@
 
 // chain parameters access
 #define CACTIVE(I) (rt->chains [ (I)*rt->sizeofChain ] )
-#define   CHASH(I) (rt->chains + (I)*rt->sizeofChain  + 1)
-#define  CHASH1(I) (rt->chains + (I)*rt1->sizeofChain + 1)
-#define  CHASH2(I) (rt->chains + (I)*rt2->sizeofChain + 1)
-#define    CSTR(I) (rt->chains + (I)*rt->sizeofChain  + 1 + rt->hlen)
+#define   CHASH(I) (rt->chains + (I)*rt->sizeofChain   + 1)
+#define  CHASH1(I) (rt1->chains + (I)*rt1->sizeofChain + 1)
+#define  CHASH2(I) (rt2->chains + (I)*rt2->sizeofChain + 1)
+#define    CSTR(I) (rt->chains + (I)*rt->sizeofChain   + 1 + rt->hlen)
 
 RTable* Rainbow_New(unsigned int length, char* chars, unsigned int depth, unsigned int count)
 {
