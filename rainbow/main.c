@@ -22,6 +22,7 @@ static void usage(int argc, char** argv)
 		"Usage: %s slen l_chains mode [PARAMS [FILE..]]\n"
 		"                        rtgen n_chains   [file]\n"
 		"                        rtnew n_chains   [file]\n"
+		"                        rtres            [file]\n"
 		"                        merge src1 [src2 [file]]\n"
 		"                        tests [n_tests   [file]]\n"
 		"                        crack hash       [file]\n"
@@ -36,7 +37,8 @@ static void usage(int argc, char** argv)
 		"\n"
 		"mode:"
 		"  rtgen  g  starts/resumes the computation of a rainbow table\n"
-		"  rtnew  n  forces to start a new table (ignore existing file)\n"
+		"  rtnew  n  starts (only) a new table (ignore existing file)\n"
+		"  rtres  r  resumes (only) a table generation (stops if no file)\n"
 		"  merge  m  merges two sorted ('Done') tables\n"
 		"            EXPERIMENTAL\n"
 		"  tests  t  runs cracking tests on random strings\n"
@@ -57,6 +59,7 @@ typedef enum
 {
 	RTGEN,
 	RTNEW,
+	RTRES,
 	MERGE,
 	TESTS,
 	CRACK,
@@ -67,7 +70,7 @@ int main(int argc, char** argv)
 	if (argc < 6)
 	{
 		usage(argc, argv);
-		return 1;
+		exit(1);
 	}
 
 	char*        charset  = "0123456789abcdefghijklmnopqrstuvwxyz";
@@ -82,6 +85,8 @@ int main(int argc, char** argv)
 		mode = RTGEN;
 	else if (!strcmp(modestr, "rtnew") || !strcmp(modestr, "n"))
 		mode = RTNEW;
+	else if (!strcmp(modestr, "rtres") || !strcmp(modestr, "r"))
+		mode = RTRES;
 	else if (!strcmp(modestr, "merge") || !strcmp(modestr, "m"))
 		mode = MERGE;
 	else if (!strcmp(modestr, "tests") || !strcmp(modestr, "t"))
@@ -91,7 +96,7 @@ int main(int argc, char** argv)
 	else
 	{
 		fprintf(stderr, "Invalid mode '%s'\n", modestr);
-		return 1;
+		exit(1);
 	}
 
 	char*        param1   = argc > 4 ? argv[4] : NULL;
@@ -108,10 +113,15 @@ int main(int argc, char** argv)
 	{
 	case RTGEN:
 	case RTNEW:
-		if (!param1) // TODO
+	case RTRES:
+		if (mode == RTRES)
+		{
+			param2 = param1;
+		}
+		else if (!param1)
 		{
 			fprintf(stderr, "Missing parameter: number of chains to generate\n");
-			return 1;
+			exit(1);
 		}
 
 		// load table
@@ -119,7 +129,15 @@ int main(int argc, char** argv)
 			rt = Rainbow_FromFileN(slen, charset, l_chains, param2);
 
 		if (!rt)
-			rt = Rainbow_New(slen, charset, l_chains, atoi(param1));
+		{
+			if (mode == RTRES)
+			{
+				fprintf(stderr, "No table computation to resume\n");
+				exit(1);
+			}
+			else
+				rt = Rainbow_New(slen, charset, l_chains, atoi(param1));
+		}
 
 		// generate more chains
 		printf("Generating chains\n");
@@ -158,7 +176,7 @@ int main(int argc, char** argv)
 			fprintf(stderr, "At least the first table must be given in the parameters\n");
 			fprintf(stderr, "\n");
 			usage(argc, argv);
-			return 1;
+			exit(1);
 		}
 
 		// load first table
@@ -206,7 +224,7 @@ int main(int argc, char** argv)
 					printf(" != ");
 					printString(tmp, 16);
 					printf("\n");
-					return 1;
+					exit(1);
 				}
 				count++;
 			}
@@ -227,7 +245,7 @@ int main(int argc, char** argv)
 			fprintf(stderr, "Hash not supplied\n");
 			fprintf(stderr, "\n");
 			usage(argc, argv);
-			return 1;
+			exit(1);
 		}
 
 		// load table
@@ -248,7 +266,7 @@ int main(int argc, char** argv)
 		{
 			fprintf(stderr, "Could not reverse hash\n");
 			Rainbow_Delete(rt);
-			return 1;
+			exit(1);
 		}
 
 		break;
