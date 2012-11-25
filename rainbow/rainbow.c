@@ -40,6 +40,7 @@ RTable* Rainbow_New(unsigned int length, char* chars, unsigned int depth, unsign
 	assert(rt->bufstr1);
 	assert(rt->bufstr2);
 	assert(rt->bufhash);
+	assert(rt->bufchain);
 
 	memset(rt->chains, 0, rt->sizeofChain * rt->a_chains);
 
