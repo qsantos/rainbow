@@ -122,6 +122,31 @@ RTable* Rainbow_FromFile(unsigned int slen, char* charset, unsigned int l_chains
 	return rt;
 }
 
+void Rainbow_ToFileN(RTable* rt, const char* filename)
+{
+	FILE* f = filename ? fopen(filename, "w") : stdout;
+	if (!f)
+	{
+		fprintf(stderr, "Could not open '%s'\n", filename);
+		exit(1);
+	}
+	Rainbow_ToFile(rt, f);
+	fclose(f);
+}
+
+RTable* Rainbow_FromFileN(unsigned int slen, char* charset, unsigned int l_chains, const char* filename)
+{
+	FILE* f = filename ? fopen(filename, "r") : stdin;
+	if (!f)
+	{
+		fprintf(stderr, "Could not open '%s'\n", filename);
+		exit(1);
+	}
+	RTable* rt = Rainbow_FromFile(slen, charset, l_chains, f);
+	fclose(f);
+	return rt;
+}
+
 RTable* Rainbow_Merge(RTable* rt1, RTable* rt2)
 {
 	assert(rt1->hlen == rt2->hlen);

@@ -16,7 +16,6 @@ typedef struct
 	unsigned int clen;
 	unsigned int l_chains;
 
-	// TODO
 	char* bufstr1;
 	char* bufstr2;
 	char* bufhash;
@@ -29,8 +28,13 @@ void    Rainbow_Delete   (RTable* rt);
 char    Rainbow_FindChain(RTable* rt);
 void    Rainbow_Sort     (RTable* rt);
 
+// loading and storing
 void    Rainbow_ToFile   (RTable* rt, FILE* f);
 RTable* Rainbow_FromFile (unsigned int slen, char* charset, unsigned int l_chains, FILE* f);
+void    Rainbow_ToFileN  (RTable* rt, const char* filename);
+RTable* Rainbow_FromFileN(unsigned int slen, char* charset, unsigned int l_chains, const char* filename);
+
+// misc
 RTable* Rainbow_Merge    (RTable* rt1, RTable* rt2);
 void    Rainbow_Print    (RTable* rt);
 char    Rainbow_Reverse  (RTable* rt, char* target, char* dest);

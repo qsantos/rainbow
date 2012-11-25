@@ -99,7 +99,6 @@ int main(int argc, char** argv)
 	char*        param3   = argc > 6 ? argv[6] : NULL;
 
 	RTable* rt = NULL;
-	FILE* f;
 	char* str = (char*) malloc(slen);
 	char* tmp = (char*) malloc(slen);
 	char hash[16];
@@ -117,14 +116,8 @@ int main(int argc, char** argv)
 
 		// load table
 		if (mode != RTNEW)
-		{
-			f = param2 ? fopen(param2, "r") : stdin;
-			if (f)
-			{
-				rt = Rainbow_FromFile(slen, charset, l_chains, f);
-				fclose(f);
-			}
-		}
+			rt = Rainbow_FromFileN(slen, charset, l_chains, param2);
+
 		if (!rt)
 			rt = Rainbow_New(slen, charset, l_chains, atoi(param1));
 
@@ -154,10 +147,7 @@ int main(int argc, char** argv)
 			printf("Pausing table generation (%u chains generated)\n", rt->n_chains);
 
 		// save table
-		f = param2 ? fopen(param2, "w") : stdout;
-		assert(f);
-		Rainbow_ToFile(rt, f);
-		fclose(f);
+		Rainbow_ToFileN(rt, param2);
 		break;
 
 	case MERGE:
@@ -172,22 +162,11 @@ int main(int argc, char** argv)
 		}
 
 		// load first table
-		f = fopen(param1, "r");
-		assert(f);
-		RTable* rt1 = Rainbow_FromFile(slen, charset, l_chains, f);
-		fclose(f);
-		assert(rt1);
-
-		// load second table
-		f = param2 ? fopen(param2, "r") : stdin;
-		assert(f);
-		RTable* rt2 = Rainbow_FromFile(slen, charset, l_chains, f);
-		fclose(f);
-		assert(rt2);
+		RTable* rt1 = Rainbow_FromFileN(slen, charset, l_chains, param1);
+		RTable* rt2 = Rainbow_FromFileN(slen, charset, l_chains, param2);
 
 		// merge tables
 		rt = Rainbow_Merge(rt1, rt2);
-		assert(rt);
 		printf("%u chains after merge\n", rt->n_chains);
 
 		// free tables
@@ -195,19 +174,12 @@ int main(int argc, char** argv)
 		Rainbow_Delete(rt1);
 
 		// save merged table
-		f = param3 ? fopen(param3, "w") : stdout;
-		assert(f);
-		Rainbow_ToFile(rt, f);
-		fclose(f);
+		Rainbow_ToFileN(rt, param3);
 		break;
 
 	case TESTS:
 		// load table
-		f = param2 ? fopen(param2, "r") : stdin;
-		assert(f);
-		rt = Rainbow_FromFile(slen, charset, l_chains, f);
-		fclose(f);
-		assert(rt);
+		rt = Rainbow_FromFileN(slen, charset, l_chains, param2);
 
 		printf("Cracking some hashes\n");
 
@@ -259,10 +231,7 @@ int main(int argc, char** argv)
 		}
 
 		// load table
-		f = param2 ? fopen(param2, "r") : stdin;
-		assert(f);
-		rt = Rainbow_FromFile(slen, charset, l_chains, f);
-		fclose(f);
+		rt = Rainbow_FromFileN(slen, charset, l_chains, param2);
 
 		// try and crack hash
 		hex2hash(param1, hash, 16);
