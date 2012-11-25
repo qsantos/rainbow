@@ -11,162 +11,204 @@
 // the length of a chain is therefore 1+hlen+slen (sizeofChain)
 
 // chain parameters access
-#define CACTIVE(I) (chains [ (I)*sizeofChain ] )
-#define   CHASH(I) (chains + (I)*sizeofChain + 1)
-#define    CSTR(I) (chains + (I)*sizeofChain + 1 + hlen)
+#define CACTIVE(I) (rt->chains [ (I)*rt->sizeofChain ] )
+#define   CHASH(I) (rt->chains + (I)*rt->sizeofChain + 1)
+#define    CSTR(I) (rt->chains + (I)*rt->sizeofChain + 1 + rt->hlen)
 
-unsigned int n_chains;
-unsigned int a_chains;
-unsigned int sizeofChain;
-char*        chains;
-
-static unsigned int hlen;
-static unsigned int slen;
-static char*        charset;
-static unsigned int clen;
-static unsigned int l_chains;
-
-static char* bufstr1;
-static char* bufstr2;
-static char* bufhash;
-static char* bufchain;
-
-static void         sort      (unsigned int left, unsigned int right);    // sort the table
-static int          binaryFind(char* hash);                               // search hash in table
-static void         mask      (unsigned int step, char* hash, char* str); // hash to str ("mask function")
-static unsigned int HTFind    (char* str);                                // Hash table implementation
-
-void Rainbow_Init(unsigned int length, char* chars, unsigned int depth, unsigned int count)
+RTable* Rainbow_New(unsigned int length, char* chars, unsigned int depth, unsigned int count)
 {
-	n_chains = 0;
+	RTable* rt = (RTable*) malloc(sizeof(RTable));
 
-	hlen = 16;
-	slen = length;
-	sizeofChain = 1 + hlen + slen;
+	rt->n_chains = 0;
 
-	charset  = strdup(chars);
-	clen     = strlen(chars);
-	l_chains = depth;
-	a_chains = count;
+	rt->hlen = 16;
+	rt->slen = length;
+	rt->sizeofChain = 1 + rt->hlen + rt->slen;
 
-	chains   = (char*) malloc(sizeofChain   * a_chains);
-	bufstr1  = (char*) malloc(slen);
-	bufstr2  = (char*) malloc(slen);
-	bufhash  = (char*) malloc(hlen);
-	bufchain = (char*) malloc(sizeofChain);
+	rt->charset  = strdup(chars);
+	rt->clen     = strlen(chars);
+	rt->l_chains = depth;
+	rt->a_chains = count;
 
-	assert(chains);
-	assert(bufstr1);
-	assert(bufstr2);
-	assert(bufhash);
+	rt->chains   = (char*) malloc(rt->sizeofChain   * rt->a_chains);
+	rt->bufstr1  = (char*) malloc(rt->slen);
+	rt->bufstr2  = (char*) malloc(rt->slen);
+	rt->bufhash  = (char*) malloc(rt->hlen);
+	rt->bufchain = (char*) malloc(rt->sizeofChain);
 
-	memset(chains, 0, sizeofChain * a_chains);
+	assert(rt->chains);
+	assert(rt->bufstr1);
+	assert(rt->bufstr2);
+	assert(rt->bufhash);
+
+	memset(rt->chains, 0, rt->sizeofChain * rt->a_chains);
 
 	srandom(time(NULL));
+
+	return rt;
 }
 
-void Rainbow_Deinit(void)
+void Rainbow_Delete(RTable* rt)
 {
-	free(bufchain);
-	free(bufhash);
-	free(bufstr2);
-	free(bufstr1);
-	free(chains);
+	free(rt->bufchain);
+	free(rt->bufhash);
+	free(rt->bufstr2);
+	free(rt->bufstr1);
+	free(rt->chains);
 }
 
-char Rainbow_FindChain(void)
+char Rainbow_FindChain(RTable* rt)
 {
 	// pick a starting point
-	for (unsigned int i = 0; i < slen; i++)
-		bufstr1[i] = charset[random() % clen];
+	for (unsigned int i = 0; i < rt->slen; i++)
+		rt->bufstr1[i] = rt->charset[random() % rt->clen];
 
 	// start a new chain from 'str'
-	MD5((uint64_t) slen, (uint8_t*) bufstr1, (uint8_t*) bufhash);
-	for (unsigned int step = 1; step < l_chains; step++)
+	MD5((uint64_t) rt->slen, (uint8_t*) rt->bufstr1, (uint8_t*) rt->bufhash);
+	for (unsigned int step = 1; step < rt->l_chains; step++)
 	{
-		mask(step, bufhash, bufstr2);
-		MD5((uint64_t) slen, (uint8_t*) bufstr2, (uint8_t*) bufhash);
+		Rainbow_Mask(rt, step, rt->bufhash, rt->bufstr2);
+		MD5((uint64_t) rt->slen, (uint8_t*) rt->bufstr2, (uint8_t*) rt->bufhash);
 	}
 
 	// collision detection
-	unsigned int htid = HTFind(bufhash);
+	unsigned int htid = Rainbow_HFind(rt, rt->bufhash);
 	if (!CACTIVE(htid))
 	{
 		CACTIVE(htid) = 1;
-		memcpy(CHASH(htid), bufhash, hlen);
-		memcpy(CSTR (htid), bufstr1, slen);
-		n_chains++;
+		memcpy(CHASH(htid), rt->bufhash, rt->hlen);
+		memcpy(CSTR (htid), rt->bufstr1, rt->slen);
+		rt->n_chains++;
 		return 1;
 	}
 
 	return 0;
 }
 
-void Rainbow_Sort(void)
+void Rainbow_Sort(RTable* rt)
 {
-	sort(0, a_chains-1);
+	Rainbow_QSort(rt, 0, rt->a_chains-1);
 }
 
-void Rainbow_ToFile(FILE* f)
+void Rainbow_ToFile(RTable* rt, FILE* f)
 {
-	fwrite(chains, sizeofChain, a_chains, f);
+	fwrite(rt->chains, rt->sizeofChain, rt->a_chains, f);
 }
 
-void Rainbow_FromFile(FILE* f)
+void Rainbow_FromFile(RTable* rt, FILE* f)
 {
-	fread(chains, sizeofChain, a_chains, f);
-	n_chains = 0;
-	for (unsigned int i = 0; i < a_chains; i++)
+	fread(rt->chains, rt->sizeofChain, rt->a_chains, f);
+	rt->n_chains = 0;
+	for (unsigned int i = 0; i < rt->a_chains; i++)
 		if (CACTIVE(i))
-			n_chains++;
+			rt->n_chains++;
 }
 
-void Rainbow_Print(void)
+void Rainbow_Print(RTable* rt)
 {
-	for (unsigned int i = 0; i < a_chains; i++)
+	for (unsigned int i = 0; i < rt->a_chains; i++)
 	{
-		printHash(CHASH(i));
+		printHash(CHASH(i), rt->slen);
 		printf(" ");
-		printString(CSTR(i));
+		printString(CSTR(i), rt->hlen);
 		printf("\n");
 	}
 }
 
-char Rainbow_Reverse(char* target, char* dest)
+char Rainbow_Reverse(RTable* rt, char* target, char* dest)
 {
 	// test for every distance to the end point
-	for (unsigned int firstStep = l_chains; firstStep >= 1; firstStep--)
+	for (unsigned int firstStep = rt->l_chains; firstStep >= 1; firstStep--)
 	{
 		// get the end point hash
-		memcpy(bufhash, target, hlen);
-		for (unsigned int step = firstStep; step < l_chains; step++)
+		memcpy(rt->bufhash, target, rt->hlen);
+		for (unsigned int step = firstStep; step < rt->l_chains; step++)
 		{
-			mask(step, bufhash, bufstr1);
-			MD5((uint64_t) slen, (uint8_t*) bufstr1, (uint8_t*) bufhash);
+			Rainbow_Mask(rt, step, rt->bufhash, rt->bufstr1);
+			MD5((uint64_t) rt->slen, (uint8_t*) rt->bufstr1, (uint8_t*) rt->bufhash);
 		}
 
 		// find the hash's chain
-		int res = binaryFind(bufhash);
+		int res = Rainbow_BFind(rt, rt->bufhash);
 		if (res < 0)
 			continue;
 
 		// get the previous string
-		memcpy(bufstr1, CSTR(res), slen);
-		MD5((uint64_t) slen, (uint8_t*) bufstr1, (uint8_t*) bufhash);
+		memcpy(rt->bufstr1, CSTR(res), rt->slen);
+		MD5((uint64_t) rt->slen, (uint8_t*) rt->bufstr1, (uint8_t*) rt->bufhash);
 		unsigned int step = 1;
-		while (step < l_chains && bstrncmp(bufhash, target, hlen) != 0)
+		while (step < rt->l_chains && bstrncmp(rt->bufhash, target, rt->hlen) != 0)
 		{
-			mask(step++, bufhash, bufstr1);
-			MD5((uint64_t) slen, (uint8_t*) bufstr1, (uint8_t*) bufhash);
+			Rainbow_Mask(rt, step++, rt->bufhash, rt->bufstr1);
+			MD5((uint64_t) rt->slen, (uint8_t*) rt->bufstr1, (uint8_t*) rt->bufhash);
 		}
-		if (step < l_chains)
+		if (step < rt->l_chains)
 		{
 			if (dest)
-				memcpy(dest, bufstr1, slen);
+				memcpy(dest, rt->bufstr1, rt->slen);
 			return 1;
 		}
 	}
 	return 0;
+}
+
+void Rainbow_Mask(RTable* rt, unsigned int step, char* hash, char* str)
+{
+	for (unsigned int j = 0; j < rt->slen; j++, str++, hash++)
+		*str = rt->charset[(unsigned char)(*hash ^ step) % rt->clen];
+}
+
+static void swap(RTable* rt, unsigned int a, unsigned int b)
+{
+	memcpy(rt->bufchain,                   rt->chains + a*rt->sizeofChain, rt->sizeofChain);
+	memcpy(rt->chains + a*rt->sizeofChain, rt->chains + b*rt->sizeofChain, rt->sizeofChain);
+	memcpy(rt->chains + b*rt->sizeofChain, rt->bufchain,                   rt->sizeofChain);
+}
+void Rainbow_QSort(RTable* rt, unsigned int left, unsigned int right)
+{
+	if (left >= right)
+		return;
+
+	char* pivotValue = CHASH(right);
+	unsigned int storeIndex = left;
+	for (unsigned int i = left; i < right; i++)
+		if (bstrncmp(CHASH(i), pivotValue, rt->hlen) < 0)
+			swap(rt, i, storeIndex++);
+
+	swap(rt, storeIndex, right);
+
+	if (storeIndex)
+		Rainbow_QSort(rt, left, storeIndex-1);
+	Rainbow_QSort(rt, storeIndex, right);
+}
+
+int Rainbow_BFind(RTable* rt, char* hash)
+{
+	unsigned int start = 0;
+	unsigned int end   = rt->a_chains-1;
+	while (start != end)
+	{
+		unsigned int middle = (start + end) / 2;
+		if (bstrncmp(hash, CHASH(middle), rt->hlen) <= 0)
+			end = middle;
+		else
+			start = middle + 1;
+	}
+	if (bstrncmp(CHASH(start), hash, rt->hlen) == 0)
+		return start;
+	else
+		return -1;
+}
+
+// Hash table implementation
+static unsigned int HashFun(const char* str, unsigned int len);
+unsigned int Rainbow_HFind(RTable* rt, char* str)
+{
+	unsigned int cur = HashFun(str, rt->slen) % rt->a_chains;
+	while (CACTIVE(cur) && bstrncmp(CHASH(cur), str, rt->slen) != 0)
+		if (++cur >= rt->a_chains)
+			cur = 0;
+	return cur;
 }
 
 char bstrncmp(char* a, char* b, int n)
@@ -177,7 +219,7 @@ char bstrncmp(char* a, char* b, int n)
 	return 0;
 }
 
-void hex2hash(char* hex, char* hash)
+void hex2hash(char* hex, char* hash, unsigned int hlen)
 {
 	for (unsigned int i = 0; i < hlen; i++)
 	{
@@ -190,75 +232,16 @@ void hex2hash(char* hex, char* hash)
 	}
 }
 
-void printHash(char* hash)
+void printHash(char* hash, unsigned int hlen)
 {
 	for (unsigned int i = 0; i < hlen; i++, hash++)
 		printf("%.2x", (unsigned char) *hash);
 }
 
-void printString(char* str)
+void printString(char* str, unsigned int slen)
 {
 	for (unsigned int j = 0; j < slen; j++, str++)
 		printf("%c", *str);
-}
-
-static void swap(unsigned int a, unsigned int b)
-{
-	memcpy(bufchain,               chains + a*sizeofChain, sizeofChain);
-	memcpy(chains + a*sizeofChain, chains + b*sizeofChain, sizeofChain);
-	memcpy(chains + b*sizeofChain, bufchain,               sizeofChain);
-}
-static void sort(unsigned int left, unsigned int right)
-{
-	if (left >= right)
-		return;
-
-	char* pivotValue = CHASH(right);
-	unsigned int storeIndex = left;
-	for (unsigned int i = left; i < right; i++)
-		if (bstrncmp(CHASH(i), pivotValue, hlen) < 0)
-			swap(i, storeIndex++);
-
-	swap(storeIndex, right);
-
-	if (storeIndex)
-		sort(left, storeIndex-1);
-	sort(storeIndex, right);
-}
-
-static int binaryFind(char* hash)
-{
-	unsigned int start = 0;
-	unsigned int end   = a_chains-1;
-	while (start != end)
-	{
-		unsigned int middle = (start + end) / 2;
-		if (bstrncmp(hash, CHASH(middle), hlen) <= 0)
-			end = middle;
-		else
-			start = middle + 1;
-	}
-	if (bstrncmp(CHASH(start), hash, hlen) == 0)
-		return start;
-	else
-		return -1;
-}
-
-static void mask(unsigned int step, char* hash, char* str)
-{
-	for (unsigned int j = 0; j < slen; j++, str++, hash++)
-		*str = charset[(unsigned char)(*hash ^ step) % clen];
-}
-
-// Hash table implementation
-static unsigned int HashFun(const char* str, unsigned int len);
-static unsigned int HTFind(char* str)
-{
-	unsigned int cur = HashFun(str, slen) % a_chains;
-	while (CACTIVE(cur) && bstrncmp(CHASH(cur), str, slen) != 0)
-		if (++cur >= a_chains)
-			cur = 0;
-	return cur;
 }
 
 

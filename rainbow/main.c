@@ -90,7 +90,7 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	Rainbow_Init(slen, charset, l_chains, a_chains);
+	RTable* rt = Rainbow_New(slen, charset, l_chains, a_chains);
 
 	FILE* f;
 	char* str = (char*) malloc(slen);
@@ -104,7 +104,7 @@ int main(int argc, char** argv)
 		f = fopen(filename, "r");
 		if (f)
 		{
-			Rainbow_FromFile(f);
+			Rainbow_FromFile(rt, f);
 			fclose(f);
 		}
 
@@ -112,13 +112,13 @@ int main(int argc, char** argv)
 		// generate more chains
 		printf("Generating chains\n");
 		signal(SIGINT, stopGenerating);
-		while (generate && n_chains < a_chains)
+		while (generate && rt->n_chains < a_chains)
 		{
-			Rainbow_FindChain();
-			if (n_chains % 1024 == 0)
+			Rainbow_FindChain(rt);
+			if (rt->n_chains % 1024 == 0)
 			{
 				rewriteLine();
-				printf("Progress: %.2f%%", (float) 100 * n_chains / a_chains);
+				printf("Progress: %.2f%%", (float) 100 * rt->n_chains / a_chains);
 				fflush(stdout);
 			}
 		}
@@ -128,7 +128,7 @@ int main(int argc, char** argv)
 		if (generate)
 		{
 			printf("Sorting table\n");
-			Rainbow_Sort();
+			Rainbow_Sort(rt);
 			printf("Done\n");
 		}
 		else
@@ -137,7 +137,7 @@ int main(int argc, char** argv)
 		// save table
 		f = fopen(filename, "w");
 		assert(f);
-		Rainbow_ToFile(f);
+		Rainbow_ToFile(rt, f);
 		fclose(f);
 		break;
 
@@ -154,23 +154,23 @@ int main(int argc, char** argv)
 		unsigned int a_chains2 = atoi(param2);
 
 		// resize global table
-		chains = (char*) realloc(chains, (a_chains+a_chains2) * sizeofChain);
-		assert(chains);
+		rt->chains = (char*) realloc(rt->chains, (a_chains+a_chains2) * rt->sizeofChain);
+		assert(rt->chains);
 
 		// load second table
 		f = fopen(param1, "r");
 		assert(f);
-		fread(chains + a_chains*sizeofChain, sizeofChain, a_chains2, f);
+		fread(rt->chains + a_chains*rt->sizeofChain, rt->sizeofChain, a_chains2, f);
 		fclose(f);
 
 		// sort-merge
 		a_chains += a_chains2;
-		Rainbow_Sort();
+		Rainbow_Sort(rt);
 
 		// save merged table
 		f = fopen(filename, "w");
 		assert(f);
-		Rainbow_ToFile(f);
+		Rainbow_ToFile(rt, f);
 		fclose(f);
 		break;
 
@@ -178,7 +178,7 @@ int main(int argc, char** argv)
 		// load table
 		f = fopen(filename, "r");
 		assert(f);
-		Rainbow_FromFile(f);
+		Rainbow_FromFile(rt, f);
 		fclose(f);
 
 		printf("Cracking some hashes\n");
@@ -196,15 +196,15 @@ int main(int argc, char** argv)
 			MD5(slen, (uint8_t*) str, (uint8_t*) hash);
 
 			// crack the hash
-			if (Rainbow_Reverse(hash, tmp))
+			if (Rainbow_Reverse(rt, hash, tmp))
 			{
 				// check the cracked string
 				if (bstrncmp(str, tmp, slen))
 				{
 					rewriteLine();
-					printString(str);
+					printString(str, slen);
 					printf(" != ");
-					printString(tmp);
+					printString(tmp, 16);
 					printf("\n");
 					return 1;
 				}
@@ -213,7 +213,7 @@ int main(int argc, char** argv)
 
 			// progression
 			rewriteLine();
-			printString(str);
+			printString(str, slen);
 			printf("  %i / %i", count, i+1);
 			fflush(stdout);
 		}
@@ -227,31 +227,31 @@ int main(int argc, char** argv)
 			fprintf(stderr, "Hash not supplied\n");
 			fprintf(stderr, "\n");
 			usage(argc, argv);
-			Rainbow_Deinit();
+			Rainbow_Delete(rt);
 			return 1;
 		}
 
 		// load table
 		f = fopen(filename, "r");
 		assert(f);
-		Rainbow_FromFile(f);
+		Rainbow_FromFile(rt, f);
 		fclose(f);
 
 		// try and crack hash
-		hex2hash(param1, hash);
-		int res = Rainbow_Reverse(hash, str);
+		hex2hash(param1, hash, 16);
+		int res = Rainbow_Reverse(rt, hash, str);
 
 		if (res)
 		{
-			printHash(hash);
+			printHash(hash, 16);
 			printf(" ");
-			printString(str);
+			printString(str, slen);
 			printf("\n");
 		}
 		else
 		{
 			fprintf(stderr, "Could not reverse hash\n");
-			Rainbow_Deinit();
+			Rainbow_Delete(rt);
 			return 1;
 		}
 
@@ -260,6 +260,6 @@ int main(int argc, char** argv)
 
 	free(tmp);
 	free(str);
-	Rainbow_Deinit();
+	Rainbow_Delete(rt);
 	return 0;
 }
