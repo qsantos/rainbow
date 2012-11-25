@@ -224,6 +224,7 @@ int main(int argc, char** argv)
 		RTable* dst = Rainbow_New      (slen, charset, l_chains, atoi(param1));
 
 		Rainbow_Transfer(src, dst);
+		printf("%u chains transfered\n", dst->n_chains);
 
 		Rainbow_ToFileN(dst, param3);
 		Rainbow_Delete(src);

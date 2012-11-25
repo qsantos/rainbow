@@ -78,7 +78,7 @@ char Rainbow_AddChain(RTable* rt, char* hash, char* str)
 
 void Rainbow_Transfer(RTable* rt1, RTable* rt2)
 {
-	for (unsigned int i = 0; i < rt1->n_chains; i++)
+	for (unsigned int i = 0; i < rt1->a_chains; i++)
 		if (CACTIVE1(i))
 			Rainbow_AddChain(rt2, CHASH1(i), CSTR1(i));
 }
