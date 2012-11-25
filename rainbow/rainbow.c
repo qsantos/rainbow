@@ -140,6 +140,7 @@ RTable* Rainbow_Merge(RTable* rt1, RTable* rt2)
 		i++;
 	}
 	rt->n_chains = i;
+	rt->a_chains = i; // reduce the matrix which will be stored
 	return rt;
 }
 
@@ -147,9 +148,9 @@ void Rainbow_Print(RTable* rt)
 {
 	for (unsigned int i = 0; i < rt->a_chains; i++)
 	{
-		printHash(CHASH(i), rt->slen);
+		printHash(CHASH(i), rt->hlen);
 		printf(" ");
-		printString(CSTR(i), rt->hlen);
+		printString(CSTR(i), rt->slen);
 		printf("\n");
 	}
 }
@@ -208,13 +209,14 @@ void Rainbow_QSort(RTable* rt, unsigned int left, unsigned int right)
 	if (left >= right)
 		return;
 
-	char* pivotValue = CHASH(right);
-	unsigned int storeIndex = left;
+	swap(rt, (left+right)/2, left);
+	char* pivotValue = CHASH(left);
+	unsigned int storeIndex = left+1;
 	for (unsigned int i = left; i < right; i++)
 		if (bstrncmp(CHASH(i), pivotValue, rt->hlen) < 0)
 			swap(rt, i, storeIndex++);
 
-	swap(rt, storeIndex, right);
+	swap(rt, storeIndex, left);
 
 	if (storeIndex)
 		Rainbow_QSort(rt, left, storeIndex-1);

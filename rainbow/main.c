@@ -108,6 +108,7 @@ int main(int argc, char** argv)
 		{
 			Rainbow_FromFile(rt, f);
 			fclose(f);
+			printf("%u chains loaded from '%s'\n", rt->n_chains, filename);
 		}
 
 	case RTNEW: // skip file loading
