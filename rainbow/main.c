@@ -3,6 +3,7 @@
 #include <string.h>
 #include <assert.h>
 #include <signal.h>
+#include <time.h>
 
 #include "rainbow.h"
 #include "md5.h"
@@ -90,13 +91,13 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	srandom(time(NULL));
 	RTable* rt = Rainbow_New(slen, charset, l_chains, a_chains);
 
 	FILE* f;
 	char* str = (char*) malloc(slen);
 	char* tmp = (char*) malloc(slen);
 	char hash[16];
+	srandom(time(NULL));
 
 	switch (mode)
 	{
@@ -152,21 +153,28 @@ int main(int argc, char** argv)
 			usage(argc, argv);
 			return 1;
 		}
-		unsigned int a_chains2 = atoi(param2);
 
-		// resize global table
-		rt->chains = (char*) realloc(rt->chains, (a_chains+a_chains2) * rt->sizeofChain);
-		assert(rt->chains);
-
-		// load second table
-		f = fopen(param1, "r");
+		// load first table
+		RTable* rt1 = rt;
+		f = fopen(filename, "r");
 		assert(f);
-		fread(rt->chains + a_chains*rt->sizeofChain, rt->sizeofChain, a_chains2, f);
+		Rainbow_FromFile(rt1, f);
 		fclose(f);
 
-		// sort-merge
-		a_chains += a_chains2;
-		Rainbow_Sort(rt);
+		// load second table
+		RTable* rt2 = Rainbow_New(slen, charset, l_chains, atoi(param2));
+		f = fopen(param1, "r");
+		assert(f);
+		Rainbow_FromFile(rt2, f);
+		fclose(f);
+
+		// merge tables
+		rt = Rainbow_Merge(rt1, rt2);
+		assert(rt);
+
+		// free tables
+		Rainbow_Delete(rt2);
+		Rainbow_Delete(rt1);
 
 		// save merged table
 		f = fopen(filename, "w");

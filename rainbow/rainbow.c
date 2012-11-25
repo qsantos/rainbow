@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include <time.h>
 
 #include "md5.h"
 
@@ -12,8 +11,10 @@
 
 // chain parameters access
 #define CACTIVE(I) (rt->chains [ (I)*rt->sizeofChain ] )
-#define   CHASH(I) (rt->chains + (I)*rt->sizeofChain + 1)
-#define    CSTR(I) (rt->chains + (I)*rt->sizeofChain + 1 + rt->hlen)
+#define   CHASH(I) (rt->chains + (I)*rt->sizeofChain  + 1)
+#define  CHASH1(I) (rt->chains + (I)*rt1->sizeofChain + 1)
+#define  CHASH2(I) (rt->chains + (I)*rt2->sizeofChain + 1)
+#define    CSTR(I) (rt->chains + (I)*rt->sizeofChain  + 1 + rt->hlen)
 
 RTable* Rainbow_New(unsigned int length, char* chars, unsigned int depth, unsigned int count)
 {
@@ -101,6 +102,45 @@ void Rainbow_FromFile(RTable* rt, FILE* f)
 	for (unsigned int i = 0; i < rt->a_chains; i++)
 		if (CACTIVE(i))
 			rt->n_chains++;
+}
+
+RTable* Rainbow_Merge(RTable* rt1, RTable* rt2)
+{
+	assert(rt1->hlen == rt2->hlen);
+	assert(rt1->slen == rt2->slen);
+	assert(rt1->clen == rt2->clen);
+	assert(rt1->l_chains == rt2->l_chains);
+
+	assert(rt1->a_chains == rt1->n_chains);
+	assert(rt2->a_chains == rt2->n_chains);
+
+	RTable* rt = Rainbow_New(rt1->slen, rt1->charset, rt1->l_chains, rt1->a_chains + rt2->a_chains);
+	unsigned int i1 = 0;
+	unsigned int i2 = 0;
+	unsigned int i  = 0;
+	while (i1 < rt1->a_chains || i2 < rt2->a_chains)
+	{
+		int c = bstrncmp(CHASH1(i1), CHASH2(i2), rt1->hlen);
+		if (c < 0)
+		{
+			memcpy(rt->chains + i*rt->sizeofChain, rt1->chains + i1*rt1->sizeofChain, rt->sizeofChain);
+			i1++;
+		}
+		else if (c > 0)
+		{
+			memcpy(rt->chains + i*rt->sizeofChain, rt2->chains + i1*rt2->sizeofChain, rt->sizeofChain);
+			i2++;
+		}
+		else
+		{
+			memcpy(rt->chains + i*rt->sizeofChain, rt1->chains + i1*rt1->sizeofChain, rt->sizeofChain);
+			i1++;
+			i2++;
+		}
+		i++;
+	}
+	rt->n_chains = i;
+	return rt;
 }
 
 void Rainbow_Print(RTable* rt)
