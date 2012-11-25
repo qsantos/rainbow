@@ -19,7 +19,7 @@ static void usage(int argc, char** argv)
 
 	printf
 	(
-		"Usage: %s slen l_chains mode [PARAMS [FILE..]]\n"
+		"Usage: %s slen l_chains mode [PARAMS]\n"
 		"                        rtgen n_chains   [file]\n"
 		"                        rtnew n_chains   [file]\n"
 		"                        rtres            [file]\n"
@@ -27,6 +27,7 @@ static void usage(int argc, char** argv)
 		"                        tests [n_tests   [file]]\n"
 		"                        crack hash       [file]\n"
 		"\n"
+		"PARAMS:\n"
 		"  slen       length of the non-hashed string / key\n"
 		"  l_chains   length of the chains to generate\n"
 		"  n_chains   the number of chains to be generated\n"
