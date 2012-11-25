@@ -19,13 +19,14 @@ static void usage(int argc, char** argv)
 
 	printf
 	(
-		"Usage: %s slen l_chains mode [PARAMS]\n"
+		"Usage: %s slen l_chains mode  [PARAMS..]\n"
 		"                        rtgen n_chains   [file]\n"
-		"                        rtnew n_chains   [file]\n"
+		"                        rtnew n_chains   [dst]\n"
 		"                        rtres            [file]\n"
-		"                        merge src1 [src2 [file]]\n"
-		"                        tests [n_tests   [file]]\n"
-		"                        crack hash       [file]\n"
+		"                        rsize n_chains src [dst]\n"
+		"                        merge src1 [src2 [dst]]\n"
+		"                        tests [n_tests   [src]]\n"
+		"                        crack hash       [src]\n"
 		"\n"
 		"PARAMS:\n"
 		"  slen       length of the non-hashed string / key\n"
@@ -33,8 +34,9 @@ static void usage(int argc, char** argv)
 		"  n_chains   the number of chains to be generated\n"
 		"  n_tests    the number of tests to perform (default: 1000)\n"
 		"  hash       the hash to be reversed\n"
-		"  file       the file where the table is stored\n"
-		"  src1,src2  tables to be merged (can be the same as 'file')\n"
+		"  src        file containing a rainbow table (only read)\n"
+		"  dst        file containing a rainbow table (only write)\n"
+		"  file       file containing a rainbow table (both)\n"
 		"\n"
 		"mode:"
 		"  rtgen  g  starts/resumes the computation of a rainbow table\n"
@@ -42,6 +44,7 @@ static void usage(int argc, char** argv)
 		"  rtres  r  resumes (only) a table generation (stops if no file)\n"
 		"  merge  m  merges two sorted ('Done') tables\n"
 		"            EXPERIMENTAL\n"
+		"  rsize  s  resizes table to store n_chains (only to a bigger one)\n"
 		"  tests  t  runs cracking tests on random strings\n"
 		"  crack  c  tries to reverse a hash\n"
 		,
@@ -62,6 +65,7 @@ typedef enum
 	RTNEW,
 	RTRES,
 	MERGE,
+	RSIZE,
 	TESTS,
 	CRACK,
 } Mode;
@@ -90,6 +94,8 @@ int main(int argc, char** argv)
 		mode = RTRES;
 	else if (!strcmp(modestr, "merge") || !strcmp(modestr, "m"))
 		mode = MERGE;
+	else if (!strcmp(modestr, "rsize") || !strcmp(modestr, "s"))
+		mode = RSIZE;
 	else if (!strcmp(modestr, "tests") || !strcmp(modestr, "t"))
 		mode = TESTS;
 	else if (!strcmp(modestr, "crack") || !strcmp(modestr, "c"))
@@ -100,9 +106,9 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
-	char*        param1   = argc > 4 ? argv[4] : NULL;
-	char*        param2   = argc > 5 ? argv[5] : NULL;
-	char*        param3   = argc > 6 ? argv[6] : NULL;
+	char* param1 = argc > 4 ? argv[4] : NULL;
+	char* param2 = argc > 5 ? argv[5] : NULL;
+	char* param3 = argc > 6 ? argv[6] : NULL;
 
 	RTable* rt = NULL;
 	char* str = (char*) malloc(slen);
@@ -167,6 +173,7 @@ int main(int argc, char** argv)
 
 		// save table
 		Rainbow_ToFileN(rt, param2);
+		Rainbow_Delete(rt);
 		break;
 
 	case MERGE:
@@ -194,6 +201,33 @@ int main(int argc, char** argv)
 
 		// save merged table
 		Rainbow_ToFileN(rt, param3);
+		Rainbow_Delete(rt);
+		break;
+
+	case RSIZE:
+		if (!param1)
+		{
+			fprintf(stderr, "The new size and the source table must be provided\n");
+			fprintf(stderr, "\n");
+			usage(argc, argv);
+			exit(1);
+		}
+		if (!param2)
+		{
+			fprintf(stderr, "At least the source table must be given in the parameters\n");
+			fprintf(stderr, "\n");
+			usage(argc, argv);
+			exit(1);
+		}
+
+		RTable* src = Rainbow_FromFileN(slen, charset, l_chains, param2);
+		RTable* dst = Rainbow_New      (slen, charset, l_chains, atoi(param1));
+
+		Rainbow_Transfer(src, dst);
+
+		Rainbow_ToFileN(dst, param3);
+		Rainbow_Delete(src);
+		Rainbow_Delete(dst);
 		break;
 
 	case TESTS:
@@ -238,6 +272,7 @@ int main(int argc, char** argv)
 		}
 		printf("\n");
 
+		Rainbow_Delete(rt);
 		break;
 
 	case CRACK:
@@ -270,11 +305,11 @@ int main(int argc, char** argv)
 			exit(1);
 		}
 
+		Rainbow_Delete(rt);
 		break;
 	}
 
 	free(tmp);
 	free(str);
-	Rainbow_Delete(rt);
 	return 0;
 }

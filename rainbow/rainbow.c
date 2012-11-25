@@ -6,15 +6,19 @@
 
 #include "md5.h"
 
-// a chain is made of a status byte, a hash and a string
-// the length of a chain is therefore 1+hlen+slen (sizeofChain)
-
 // chain parameters access
-#define CACTIVE(I) (rt->chains [ (I)*rt->sizeofChain ] )
-#define   CHASH(I) (rt->chains + (I)*rt->sizeofChain   + 1)
+// TODO : might be a simpler way...
+#define  CACTIVE(I) (rt->chains  [ (I)*rt->sizeofChain  ] )
+#define CACTIVE1(I) (rt1->chains [ (I)*rt1->sizeofChain ] )
+#define CACTIVE2(I) (rt2->chains [ (I)*rt2->sizeofChain ] )
+
+#define   CHASH(I) (rt->chains  + (I)*rt->sizeofChain  + 1)
 #define  CHASH1(I) (rt1->chains + (I)*rt1->sizeofChain + 1)
 #define  CHASH2(I) (rt2->chains + (I)*rt2->sizeofChain + 1)
-#define    CSTR(I) (rt->chains + (I)*rt->sizeofChain   + 1 + rt->hlen)
+
+#define    CSTR(I) (rt->chains  + (I)*rt->sizeofChain  + 1 + rt->hlen)
+#define   CSTR1(I) (rt1->chains + (I)*rt1->sizeofChain + 1 + rt1->hlen)
+#define   CSTR2(I) (rt2->chains + (I)*rt2->sizeofChain + 1 + rt2->hlen)
 
 RTable* Rainbow_New(unsigned int length, char* chars, unsigned int depth, unsigned int count)
 {
@@ -57,6 +61,28 @@ void Rainbow_Delete(RTable* rt)
 	free(rt->chains);
 }
 
+char Rainbow_AddChain(RTable* rt, char* hash, char* str)
+{
+	// collision detection
+	unsigned int htid = Rainbow_HFind(rt, hash);
+	if (CACTIVE(htid))
+	{
+		CACTIVE(htid) = 1;
+		memcpy(CHASH(htid), hash, rt->hlen);
+		memcpy(CSTR (htid), str,  rt->slen);
+		rt->n_chains++;
+		return 1;
+	}
+	return 0;
+}
+
+void Rainbow_Transfer(RTable* rt1, RTable* rt2)
+{
+	for (unsigned int i = 0; i < rt1->n_chains; i++)
+		if (CACTIVE1(i))
+			Rainbow_AddChain(rt2, CHASH1(i), CSTR1(i));
+}
+
 char Rainbow_FindChain(RTable* rt)
 {
 	// pick a starting point
@@ -71,18 +97,7 @@ char Rainbow_FindChain(RTable* rt)
 		MD5((uint64_t) rt->slen, (uint8_t*) rt->bufstr2, (uint8_t*) rt->bufhash);
 	}
 
-	// collision detection
-	unsigned int htid = Rainbow_HFind(rt, rt->bufhash);
-	if (!CACTIVE(htid))
-	{
-		CACTIVE(htid) = 1;
-		memcpy(CHASH(htid), rt->bufhash, rt->hlen);
-		memcpy(CSTR (htid), rt->bufstr1, rt->slen);
-		rt->n_chains++;
-		return 1;
-	}
-
-	return 0;
+	return Rainbow_AddChain(rt, rt->bufhash, rt->bufstr1);
 }
 
 void Rainbow_Sort(RTable* rt)

@@ -3,6 +3,9 @@
 
 #include <stdio.h>
 
+// a chain is made of a status byte, a hash and a string
+// the length of a chain is therefore 1+hlen+slen (sizeofChain)
+
 typedef struct
 {
 	unsigned int n_chains;    // number of currently active chains
@@ -25,6 +28,8 @@ typedef struct
 // generation
 RTable* Rainbow_New      (unsigned int length, char* chars, unsigned int depth, unsigned int count);
 void    Rainbow_Delete   (RTable* rt);
+char    Rainbow_AddChain (RTable* rt, char* hash, char* str);
+void    Rainbow_Transfer (RTable* rt1, RTable* rt2);
 char    Rainbow_FindChain(RTable* rt);
 void    Rainbow_Sort     (RTable* rt);
 
