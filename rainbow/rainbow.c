@@ -30,7 +30,7 @@ RTable* Rainbow_New(unsigned int length, char* chars, unsigned int depth, unsign
 	rt->l_chains = depth;
 	rt->a_chains = count;
 
-	rt->chains   = (char*) malloc(rt->sizeofChain   * rt->a_chains);
+	rt->chains   = (char*) malloc(rt->sizeofChain * rt->a_chains);
 	rt->bufstr1  = (char*) malloc(rt->slen);
 	rt->bufstr2  = (char*) malloc(rt->slen);
 	rt->bufhash  = (char*) malloc(rt->hlen);
@@ -42,8 +42,6 @@ RTable* Rainbow_New(unsigned int length, char* chars, unsigned int depth, unsign
 	assert(rt->bufhash);
 
 	memset(rt->chains, 0, rt->sizeofChain * rt->a_chains);
-
-	srandom(time(NULL));
 
 	return rt;
 }

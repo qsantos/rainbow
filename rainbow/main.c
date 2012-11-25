@@ -90,6 +90,7 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
+	srandom(time(NULL));
 	RTable* rt = Rainbow_New(slen, charset, l_chains, a_chains);
 
 	FILE* f;
