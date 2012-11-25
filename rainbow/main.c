@@ -8,6 +8,14 @@
 #include "rainbow.h"
 #include "md5.h"
 
+#define ERROR(...)                    \
+{                                     \
+	fprintf(stderr, __VA_ARGS__); \
+	fprintf(stderr, "\n");        \
+	usage(argc, argv);            \
+	exit(1);                      \
+}
+
 static void rewriteLine(void)
 {
 	printf("\r\33[K");
@@ -101,10 +109,7 @@ int main(int argc, char** argv)
 	else if (!strcmp(modestr, "crack") || !strcmp(modestr, "c"))
 		mode = CRACK;
 	else
-	{
-		fprintf(stderr, "Invalid mode '%s'\n", modestr);
-		exit(1);
-	}
+		ERROR("Invalid mode '%s'\n", modestr);
 
 	char* param1 = argc > 4 ? argv[4] : NULL;
 	char* param2 = argc > 5 ? argv[5] : NULL;
@@ -122,14 +127,9 @@ int main(int argc, char** argv)
 	case RTNEW:
 	case RTRES:
 		if (mode == RTRES)
-		{
 			param2 = param1;
-		}
 		else if (!param1)
-		{
-			fprintf(stderr, "Missing parameter: number of chains to generate\n");
-			exit(1);
-		}
+			ERROR("Missing parameter: number of chains to generate\n");
 
 		// load table
 		if (mode != RTNEW)
@@ -138,10 +138,7 @@ int main(int argc, char** argv)
 		if (!rt)
 		{
 			if (mode == RTRES)
-			{
-				fprintf(stderr, "No table computation to resume\n");
-				exit(1);
-			}
+				ERROR("No table computation to resume\n")
 			else
 				rt = Rainbow_New(slen, charset, l_chains, atoi(param1));
 		}
@@ -180,16 +177,14 @@ int main(int argc, char** argv)
 		fprintf(stderr, "WARNING: this feature is experimental\n");
 
 		if (!param1)
-		{
-			fprintf(stderr, "At least the first table must be given in the parameters\n");
-			fprintf(stderr, "\n");
-			usage(argc, argv);
-			exit(1);
-		}
+			ERROR("At least the first table must be given in the parameters\n")
 
-		// load first table
+		// load tables
 		RTable* rt1 = Rainbow_FromFileN(slen, charset, l_chains, param1);
 		RTable* rt2 = Rainbow_FromFileN(slen, charset, l_chains, param2);
+
+		if (!rt1) ERROR("Could not load first table\n")
+		if (!rt2) ERROR("Could not load second table\n")
 
 		// merge tables
 		rt = Rainbow_Merge(rt1, rt2);
@@ -205,23 +200,13 @@ int main(int argc, char** argv)
 		break;
 
 	case RSIZE:
-		if (!param1)
-		{
-			fprintf(stderr, "The new size and the source table must be provided\n");
-			fprintf(stderr, "\n");
-			usage(argc, argv);
-			exit(1);
-		}
-		if (!param2)
-		{
-			fprintf(stderr, "At least the source table must be given in the parameters\n");
-			fprintf(stderr, "\n");
-			usage(argc, argv);
-			exit(1);
-		}
+		if (!param1) ERROR("The new size and the source table must be provided\n")
+		if (!param2) ERROR("At least the source table must be given in the parameters\n")
 
 		RTable* src = Rainbow_FromFileN(slen, charset, l_chains, param2);
 		RTable* dst = Rainbow_New      (slen, charset, l_chains, atoi(param1));
+
+		if (!src) ERROR("Could no load source table\n")
 
 		Rainbow_Transfer(src, dst);
 		printf("%u chains transfered\n", dst->n_chains);
@@ -234,6 +219,7 @@ int main(int argc, char** argv)
 	case TESTS:
 		// load table
 		rt = Rainbow_FromFileN(slen, charset, l_chains, param2);
+		if (!rt) ERROR("Could no load table\n")
 
 		printf("Cracking some hashes\n");
 
@@ -277,16 +263,11 @@ int main(int argc, char** argv)
 		break;
 
 	case CRACK:
-		if (!param1)
-		{
-			fprintf(stderr, "Hash not supplied\n");
-			fprintf(stderr, "\n");
-			usage(argc, argv);
-			exit(1);
-		}
+		if (!param1) ERROR("Hash not supplied\n")
 
 		// load table
 		rt = Rainbow_FromFileN(slen, charset, l_chains, param2);
+		if (!rt) ERROR("Could no load table\n")
 
 		// try and crack hash
 		hex2hash(param1, hash, 16);
@@ -300,11 +281,7 @@ int main(int argc, char** argv)
 			printf("\n");
 		}
 		else
-		{
-			fprintf(stderr, "Could not reverse hash\n");
-			Rainbow_Delete(rt);
-			exit(1);
-		}
+			ERROR("Could not reverse hash\n")
 
 		Rainbow_Delete(rt);
 		break;
