@@ -65,7 +65,7 @@ char Rainbow_AddChain(RTable* rt, char* hash, char* str)
 {
 	// collision detection
 	unsigned int htid = Rainbow_HFind(rt, hash);
-	if (CACTIVE(htid))
+	if (!CACTIVE(htid))
 	{
 		CACTIVE(htid) = 1;
 		memcpy(CHASH(htid), hash, rt->hlen);
