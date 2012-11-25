@@ -134,7 +134,7 @@ int main(int argc, char** argv)
 			printf("Done\n");
 		}
 		else
-			printf("Pausing table generation\n");
+			printf("Pausing table generation (%u chains generated)\n", rt->n_chains);
 
 		// save table
 		f = fopen(filename, "w");
@@ -160,6 +160,7 @@ int main(int argc, char** argv)
 		assert(f);
 		Rainbow_FromFile(rt1, f);
 		fclose(f);
+		printf("%u chains loaded from '%s'\n", rt1->n_chains, filename);
 
 		// load second table
 		RTable* rt2 = Rainbow_New(slen, charset, l_chains, atoi(param2));
@@ -167,10 +168,12 @@ int main(int argc, char** argv)
 		assert(f);
 		Rainbow_FromFile(rt2, f);
 		fclose(f);
+		printf("%u chains loaded from '%s'\n", rt2->n_chains, param1);
 
 		// merge tables
 		rt = Rainbow_Merge(rt1, rt2);
 		assert(rt);
+		printf("%u chains after merge\n", rt->n_chains);
 
 		// free tables
 		Rainbow_Delete(rt2);
@@ -189,6 +192,7 @@ int main(int argc, char** argv)
 		assert(f);
 		Rainbow_FromFile(rt, f);
 		fclose(f);
+		printf("%u chains loaded from '%s'\n", rt->n_chains, filename);
 
 		printf("Cracking some hashes\n");
 
@@ -245,6 +249,7 @@ int main(int argc, char** argv)
 		assert(f);
 		Rainbow_FromFile(rt, f);
 		fclose(f);
+		printf("%u chains loaded from '%s'\n", rt->n_chains, filename);
 
 		// try and crack hash
 		hex2hash(param1, hash, 16);
