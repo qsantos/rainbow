@@ -138,10 +138,7 @@ RTable* Rainbow_FromFileN(unsigned int slen, char* charset, unsigned int l_chain
 {
 	FILE* f = filename ? fopen(filename, "r") : stdin;
 	if (!f)
-	{
-		fprintf(stderr, "Could not open '%s'\n", filename);
-		exit(1);
-	}
+		return NULL;
 	RTable* rt = Rainbow_FromFile(slen, charset, l_chains, f);
 	fclose(f);
 	return rt;
