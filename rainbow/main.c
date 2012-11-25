@@ -96,7 +96,7 @@ int main(int argc, char** argv)
 
 	char*        param1   = argc > 4 ? argv[4] : NULL;
 	char*        param2   = argc > 5 ? argv[5] : NULL;
-//	char*        param3   = argc > 6 ? argv[6] : NULL;
+	char*        param3   = argc > 6 ? argv[6] : NULL;
 
 	RTable* rt = NULL;
 	FILE* f;
@@ -162,29 +162,28 @@ int main(int argc, char** argv)
 
 	case MERGE:
 		fprintf(stderr, "WARNING: this feature is experimental\n");
-/*
 
-		if (!param1 || !param2)
+		if (!param1)
 		{
-			fprintf(stderr, "Second table information not supplied\n");
+			fprintf(stderr, "At least the first table must be given in the parameters\n");
 			fprintf(stderr, "\n");
 			usage(argc, argv);
 			return 1;
 		}
 
 		// load first table
-		RTable* rt1 = rt;
-		f = fopen(filename, "r");
-		assert(f);
-		Rainbow_FromFile(rt1, f);
-		fclose(f);
-
-		// load second table
-		RTable* rt2 = Rainbow_New(slen, charset, l_chains, atoi(param2));
 		f = fopen(param1, "r");
 		assert(f);
-		Rainbow_FromFile(rt2, f);
+		RTable* rt1 = Rainbow_FromFile(slen, charset, l_chains, f);
 		fclose(f);
+		assert(rt1);
+
+		// load second table
+		f = param2 ? fopen(param2, "r") : stdin;
+		assert(f);
+		RTable* rt2 = Rainbow_FromFile(slen, charset, l_chains, f);
+		fclose(f);
+		assert(rt2);
 
 		// merge tables
 		rt = Rainbow_Merge(rt1, rt2);
@@ -196,12 +195,11 @@ int main(int argc, char** argv)
 		Rainbow_Delete(rt1);
 
 		// save merged table
-		f = fopen(filename, "w");
+		f = param3 ? fopen(param3, "w") : stdout;
 		assert(f);
 		Rainbow_ToFile(rt, f);
 		fclose(f);
 		break;
-*/
 
 	case TESTS:
 		// load table
