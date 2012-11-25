@@ -30,7 +30,7 @@ char    Rainbow_FindChain(RTable* rt);
 void    Rainbow_Sort     (RTable* rt);
 
 void    Rainbow_ToFile   (RTable* rt, FILE* f);
-void    Rainbow_FromFile (RTable* rt, FILE* f);
+RTable* Rainbow_FromFile (unsigned int slen, char* charset, unsigned int l_chains, FILE* f);
 RTable* Rainbow_Merge    (RTable* rt1, RTable* rt2);
 void    Rainbow_Print    (RTable* rt);
 char    Rainbow_Reverse  (RTable* rt, char* target, char* dest);

@@ -95,13 +95,31 @@ void Rainbow_ToFile(RTable* rt, FILE* f)
 	fwrite(rt->chains, rt->sizeofChain, rt->a_chains, f);
 }
 
-void Rainbow_FromFile(RTable* rt, FILE* f)
+RTable* Rainbow_FromFile(unsigned int slen, char* charset, unsigned int l_chains, FILE* f)
 {
+	assert(ftell(f) == 0); // TODO
+	fseek(f, 0, SEEK_END);
+	unsigned int size = ftell(f);
+	fseek(f, 0, SEEK_SET);
+
+	// TODO
+	unsigned int hlen = 16;
+	unsigned int sizeofChain = 1 + hlen + slen;
+	if (size % sizeofChain)
+	{
+		fprintf(stderr, "Invalid file\n");
+		exit(1);
+	}
+	unsigned int a_chains = size / sizeofChain;
+
+	RTable* rt = Rainbow_New(slen, charset, l_chains, a_chains);
 	fread(rt->chains, rt->sizeofChain, rt->a_chains, f);
 	rt->n_chains = 0;
 	for (unsigned int i = 0; i < rt->a_chains; i++)
 		if (CACTIVE(i))
 			rt->n_chains++;
+	printf("%u chains loaded\n", rt->n_chains);
+	return rt;
 }
 
 RTable* Rainbow_Merge(RTable* rt1, RTable* rt2)

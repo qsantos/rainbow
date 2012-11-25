@@ -19,22 +19,28 @@ static void usage(int argc, char** argv)
 
 	printf
 	(
-		"Usage: %s file slen l_chains a_chains mode [PARAM]\n"
+		"Usage: %s slen l_chains mode [PARAMS [FILE..]]\n"
+		"                        rtgen n_chains   [file]\n"
+		"                        rtnew n_chains   [file]\n"
+		"                        merge src1 [src2 [file]]\n"
+		"                        tests [n_tests   [file]]\n"
+		"                        crack hash       [file]\n"
 		"\n"
-		"  file      file where to store/load the rainbow table\n"
-		"  slen      length of the non-hashed string / key\n"
-		"  l_chains  length of the chains to generate\n"
-		"  a_chains  allocate space for 'a_chains' chains\n"
+		"  slen       length of the non-hashed string / key\n"
+		"  l_chains   length of the chains to generate\n"
+		"  n_chains   the number of chains to be generated\n"
+		"  n_tests    the number of tests to perform (default: 1000)\n"
+		"  hash       the hash to be reversed\n"
+		"  file       the file where the table is stored\n"
+		"  src1,src2  tables to be merged (can be the same as 'file')\n"
 		"\n"
 		"mode:"
 		"  rtgen  g  starts/resumes the computation of a rainbow table\n"
-		"            NOTE: you must use the same parameters for resuming\n"
 		"  rtnew  n  forces to start a new table (ignore existing file)\n"
-		"  merge  m  merges with another table (PARAM: file2 a_chains2)\n"
-		"            NOTE: the two table must be sorted ('Done' message)\n"
+		"  merge  m  merges two sorted ('Done') tables\n"
 		"            EXPERIMENTAL\n"
-		"  tests  t  runs cracking tests on PARAM random strings (default: 1000)\n"
-		"  crack  c  tries to crack PARAM (PARAM is requisite)\n"
+		"  tests  t  runs cracking tests on random strings\n"
+		"  crack  c  tries to reverse a hash\n"
 		,
 		argv[0]
 	);
@@ -64,15 +70,12 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	char*        filename = argv[1];
 	char*        charset  = "0123456789abcdefghijklmnopqrstuvwxyz";
-	unsigned int slen     = atoi(argv[2]);
 	unsigned int clen     = strlen(charset);
-	unsigned int l_chains = atoi(argv[3]);
-	unsigned int a_chains = atoi(argv[4]);
-	char*        modestr  = argv[5];
-	char*        param1   = argc >= 7 ? argv[6] : NULL;
-	char*        param2   = argc >= 8 ? argv[7] : NULL;
+
+	unsigned int slen     = atoi(argv[1]);
+	unsigned int l_chains = atoi(argv[2]);
+	char*        modestr  = argv[3];
 
 	Mode mode;
 	if (!strcmp(modestr, "rtgen") || !strcmp(modestr, "g"))
@@ -91,8 +94,11 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	RTable* rt = Rainbow_New(slen, charset, l_chains, a_chains);
+	char*        param1   = argc > 4 ? argv[4] : NULL;
+	char*        param2   = argc > 5 ? argv[5] : NULL;
+//	char*        param3   = argc > 6 ? argv[6] : NULL;
 
+	RTable* rt = NULL;
 	FILE* f;
 	char* str = (char*) malloc(slen);
 	char* tmp = (char*) malloc(slen);
@@ -102,26 +108,36 @@ int main(int argc, char** argv)
 	switch (mode)
 	{
 	case RTGEN:
-		// load table
-		f = fopen(filename, "r");
-		if (f)
+	case RTNEW:
+		if (!param1) // TODO
 		{
-			Rainbow_FromFile(rt, f);
-			fclose(f);
-			printf("%u chains loaded from '%s'\n", rt->n_chains, filename);
+			fprintf(stderr, "Missing parameter: number of chains to generate\n");
+			return 1;
 		}
 
-	case RTNEW: // skip file loading
+		// load table
+		if (mode != RTNEW)
+		{
+			f = param2 ? fopen(param2, "r") : stdin;
+			if (f)
+			{
+				rt = Rainbow_FromFile(slen, charset, l_chains, f);
+				fclose(f);
+			}
+		}
+		if (!rt)
+			rt = Rainbow_New(slen, charset, l_chains, atoi(param1));
+
 		// generate more chains
 		printf("Generating chains\n");
 		signal(SIGINT, stopGenerating);
-		while (generate && rt->n_chains < a_chains)
+		while (generate && rt->n_chains < rt->a_chains)
 		{
 			Rainbow_FindChain(rt);
 			if (rt->n_chains % 1024 == 0)
 			{
 				rewriteLine();
-				printf("Progress: %.2f%%", (float) 100 * rt->n_chains / a_chains);
+				printf("Progress: %.2f%%", (float) 100 * rt->n_chains / rt->a_chains);
 				fflush(stdout);
 			}
 		}
@@ -138,7 +154,7 @@ int main(int argc, char** argv)
 			printf("Pausing table generation (%u chains generated)\n", rt->n_chains);
 
 		// save table
-		f = fopen(filename, "w");
+		f = param2 ? fopen(param2, "w") : stdout;
 		assert(f);
 		Rainbow_ToFile(rt, f);
 		fclose(f);
@@ -146,6 +162,7 @@ int main(int argc, char** argv)
 
 	case MERGE:
 		fprintf(stderr, "WARNING: this feature is experimental\n");
+/*
 
 		if (!param1 || !param2)
 		{
@@ -161,7 +178,6 @@ int main(int argc, char** argv)
 		assert(f);
 		Rainbow_FromFile(rt1, f);
 		fclose(f);
-		printf("%u chains loaded from '%s'\n", rt1->n_chains, filename);
 
 		// load second table
 		RTable* rt2 = Rainbow_New(slen, charset, l_chains, atoi(param2));
@@ -169,7 +185,6 @@ int main(int argc, char** argv)
 		assert(f);
 		Rainbow_FromFile(rt2, f);
 		fclose(f);
-		printf("%u chains loaded from '%s'\n", rt2->n_chains, param1);
 
 		// merge tables
 		rt = Rainbow_Merge(rt1, rt2);
@@ -186,14 +201,15 @@ int main(int argc, char** argv)
 		Rainbow_ToFile(rt, f);
 		fclose(f);
 		break;
+*/
 
 	case TESTS:
 		// load table
-		f = fopen(filename, "r");
+		f = param2 ? fopen(param2, "r") : stdin;
 		assert(f);
-		Rainbow_FromFile(rt, f);
+		rt = Rainbow_FromFile(slen, charset, l_chains, f);
 		fclose(f);
-		printf("%u chains loaded from '%s'\n", rt->n_chains, filename);
+		assert(rt);
 
 		printf("Cracking some hashes\n");
 
@@ -241,16 +257,14 @@ int main(int argc, char** argv)
 			fprintf(stderr, "Hash not supplied\n");
 			fprintf(stderr, "\n");
 			usage(argc, argv);
-			Rainbow_Delete(rt);
 			return 1;
 		}
 
 		// load table
-		f = fopen(filename, "r");
+		f = param2 ? fopen(param2, "r") : stdin;
 		assert(f);
-		Rainbow_FromFile(rt, f);
+		rt = Rainbow_FromFile(slen, charset, l_chains, f);
 		fclose(f);
-		printf("%u chains loaded from '%s'\n", rt->n_chains, filename);
 
 		// try and crack hash
 		hex2hash(param1, hash, 16);
