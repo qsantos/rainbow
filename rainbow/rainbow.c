@@ -112,7 +112,12 @@ void RTable_ToFile(RTable* rt, FILE* f)
 
 RTable* RTable_FromFile(unsigned int slen, char* charset, unsigned int l_chains, FILE* f)
 {
-	assert(ftell(f) == 0); // TODO
+	if (ftell(f) != 0)
+	{
+		fprintf(stderr, "Nothing to read\n");
+		exit(1);
+	}
+
 	fseek(f, 0, SEEK_END);
 	unsigned int size = ftell(f);
 	fseek(f, 0, SEEK_SET);
