@@ -80,7 +80,7 @@ typedef enum
 
 int main(int argc, char** argv)
 {
-	if (argc < 6)
+	if (argc < 4)
 	{
 		usage(argc, argv);
 		exit(1);
