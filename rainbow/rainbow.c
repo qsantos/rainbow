@@ -20,7 +20,7 @@
 #define   CSTR1(I) (rt1->chains + (I)*rt1->sizeofChain + 1 + rt1->hlen)
 #define   CSTR2(I) (rt2->chains + (I)*rt2->sizeofChain + 1 + rt2->hlen)
 
-RTable* Rainbow_New(unsigned int length, char* chars, unsigned int depth, unsigned int count)
+RTable* RTable_New(unsigned int length, char* chars, unsigned int depth, unsigned int count)
 {
 	RTable* rt = (RTable*) malloc(sizeof(RTable));
 
@@ -52,7 +52,7 @@ RTable* Rainbow_New(unsigned int length, char* chars, unsigned int depth, unsign
 	return rt;
 }
 
-void Rainbow_Delete(RTable* rt)
+void RTable_Delete(RTable* rt)
 {
 	free(rt->bufchain);
 	free(rt->bufhash);
@@ -61,10 +61,10 @@ void Rainbow_Delete(RTable* rt)
 	free(rt->chains);
 }
 
-char Rainbow_AddChain(RTable* rt, char* hash, char* str)
+char RTable_AddChain(RTable* rt, char* hash, char* str)
 {
 	// collision detection
-	unsigned int htid = Rainbow_HFind(rt, hash);
+	unsigned int htid = RTable_HFind(rt, hash);
 	if (!CACTIVE(htid))
 	{
 		CACTIVE(htid) = 1;
@@ -76,14 +76,14 @@ char Rainbow_AddChain(RTable* rt, char* hash, char* str)
 	return 0;
 }
 
-void Rainbow_Transfer(RTable* rt1, RTable* rt2)
+void RTable_Transfer(RTable* rt1, RTable* rt2)
 {
 	for (unsigned int i = 0; i < rt1->a_chains; i++)
 		if (CACTIVE1(i))
-			Rainbow_AddChain(rt2, CHASH1(i), CSTR1(i));
+			RTable_AddChain(rt2, CHASH1(i), CSTR1(i));
 }
 
-char Rainbow_FindChain(RTable* rt)
+char RTable_FindChain(RTable* rt)
 {
 	// pick a starting point
 	for (unsigned int i = 0; i < rt->slen; i++)
@@ -93,24 +93,24 @@ char Rainbow_FindChain(RTable* rt)
 	MD5((uint64_t) rt->slen, (uint8_t*) rt->bufstr1, (uint8_t*) rt->bufhash);
 	for (unsigned int step = 1; step < rt->l_chains; step++)
 	{
-		Rainbow_Mask(rt, step, rt->bufhash, rt->bufstr2);
+		RTable_Mask(rt, step, rt->bufhash, rt->bufstr2);
 		MD5((uint64_t) rt->slen, (uint8_t*) rt->bufstr2, (uint8_t*) rt->bufhash);
 	}
 
-	return Rainbow_AddChain(rt, rt->bufhash, rt->bufstr1);
+	return RTable_AddChain(rt, rt->bufhash, rt->bufstr1);
 }
 
-void Rainbow_Sort(RTable* rt)
+void RTable_Sort(RTable* rt)
 {
-	Rainbow_QSort(rt, 0, rt->a_chains-1);
+	RTable_QSort(rt, 0, rt->a_chains-1);
 }
 
-void Rainbow_ToFile(RTable* rt, FILE* f)
+void RTable_ToFile(RTable* rt, FILE* f)
 {
 	fwrite(rt->chains, rt->sizeofChain, rt->a_chains, f);
 }
 
-RTable* Rainbow_FromFile(unsigned int slen, char* charset, unsigned int l_chains, FILE* f)
+RTable* RTable_FromFile(unsigned int slen, char* charset, unsigned int l_chains, FILE* f)
 {
 	assert(ftell(f) == 0); // TODO
 	fseek(f, 0, SEEK_END);
@@ -127,7 +127,7 @@ RTable* Rainbow_FromFile(unsigned int slen, char* charset, unsigned int l_chains
 	}
 	unsigned int a_chains = size / sizeofChain;
 
-	RTable* rt = Rainbow_New(slen, charset, l_chains, a_chains);
+	RTable* rt = RTable_New(slen, charset, l_chains, a_chains);
 	fread(rt->chains, rt->sizeofChain, rt->a_chains, f);
 	rt->n_chains = 0;
 	for (unsigned int i = 0; i < rt->a_chains; i++)
@@ -137,7 +137,7 @@ RTable* Rainbow_FromFile(unsigned int slen, char* charset, unsigned int l_chains
 	return rt;
 }
 
-void Rainbow_ToFileN(RTable* rt, const char* filename)
+void RTable_ToFileN(RTable* rt, const char* filename)
 {
 	FILE* f = filename ? fopen(filename, "w") : stdout;
 	if (!f)
@@ -145,21 +145,21 @@ void Rainbow_ToFileN(RTable* rt, const char* filename)
 		fprintf(stderr, "Could not open '%s'\n", filename);
 		exit(1);
 	}
-	Rainbow_ToFile(rt, f);
+	RTable_ToFile(rt, f);
 	fclose(f);
 }
 
-RTable* Rainbow_FromFileN(unsigned int slen, char* charset, unsigned int l_chains, const char* filename)
+RTable* RTable_FromFileN(unsigned int slen, char* charset, unsigned int l_chains, const char* filename)
 {
 	FILE* f = filename ? fopen(filename, "r") : stdin;
 	if (!f)
 		return NULL;
-	RTable* rt = Rainbow_FromFile(slen, charset, l_chains, f);
+	RTable* rt = RTable_FromFile(slen, charset, l_chains, f);
 	fclose(f);
 	return rt;
 }
 
-RTable* Rainbow_Merge(RTable* rt1, RTable* rt2)
+RTable* RTable_Merge(RTable* rt1, RTable* rt2)
 {
 	assert(rt1->hlen == rt2->hlen);
 	assert(rt1->slen == rt2->slen);
@@ -169,7 +169,7 @@ RTable* Rainbow_Merge(RTable* rt1, RTable* rt2)
 	assert(rt1->a_chains == rt1->n_chains);
 	assert(rt2->a_chains == rt2->n_chains);
 
-	RTable* rt = Rainbow_New(rt1->slen, rt1->charset, rt1->l_chains, rt1->a_chains + rt2->a_chains);
+	RTable* rt = RTable_New(rt1->slen, rt1->charset, rt1->l_chains, rt1->a_chains + rt2->a_chains);
 	unsigned int i1 = 0;
 	unsigned int i2 = 0;
 	unsigned int i  = 0;
@@ -199,7 +199,7 @@ RTable* Rainbow_Merge(RTable* rt1, RTable* rt2)
 	return rt;
 }
 
-void Rainbow_Print(RTable* rt)
+void RTable_Print(RTable* rt)
 {
 	for (unsigned int i = 0; i < rt->a_chains; i++)
 	{
@@ -210,7 +210,7 @@ void Rainbow_Print(RTable* rt)
 	}
 }
 
-char Rainbow_Reverse(RTable* rt, char* target, char* dest)
+char RTable_Reverse(RTable* rt, char* target, char* dest)
 {
 	// test for every distance to the end point
 	for (unsigned int firstStep = rt->l_chains; firstStep >= 1; firstStep--)
@@ -219,12 +219,12 @@ char Rainbow_Reverse(RTable* rt, char* target, char* dest)
 		memcpy(rt->bufhash, target, rt->hlen);
 		for (unsigned int step = firstStep; step < rt->l_chains; step++)
 		{
-			Rainbow_Mask(rt, step, rt->bufhash, rt->bufstr1);
+			RTable_Mask(rt, step, rt->bufhash, rt->bufstr1);
 			MD5((uint64_t) rt->slen, (uint8_t*) rt->bufstr1, (uint8_t*) rt->bufhash);
 		}
 
 		// find the hash's chain
-		int res = Rainbow_BFind(rt, rt->bufhash);
+		int res = RTable_BFind(rt, rt->bufhash);
 		if (res < 0)
 			continue;
 
@@ -234,7 +234,7 @@ char Rainbow_Reverse(RTable* rt, char* target, char* dest)
 		unsigned int step = 1;
 		while (step < rt->l_chains && bstrncmp(rt->bufhash, target, rt->hlen) != 0)
 		{
-			Rainbow_Mask(rt, step++, rt->bufhash, rt->bufstr1);
+			RTable_Mask(rt, step++, rt->bufhash, rt->bufstr1);
 			MD5((uint64_t) rt->slen, (uint8_t*) rt->bufstr1, (uint8_t*) rt->bufhash);
 		}
 		if (step < rt->l_chains)
@@ -247,7 +247,7 @@ char Rainbow_Reverse(RTable* rt, char* target, char* dest)
 	return 0;
 }
 
-void Rainbow_Mask(RTable* rt, unsigned int step, char* hash, char* str)
+void RTable_Mask(RTable* rt, unsigned int step, char* hash, char* str)
 {
 	for (unsigned int j = 0; j < rt->slen; j++, str++, hash++)
 		*str = rt->charset[(unsigned char)(*hash ^ step) % rt->clen];
@@ -259,7 +259,7 @@ static void swap(RTable* rt, unsigned int a, unsigned int b)
 	memcpy(rt->chains + a*rt->sizeofChain, rt->chains + b*rt->sizeofChain, rt->sizeofChain);
 	memcpy(rt->chains + b*rt->sizeofChain, rt->bufchain,                   rt->sizeofChain);
 }
-void Rainbow_QSort(RTable* rt, unsigned int left, unsigned int right)
+void RTable_QSort(RTable* rt, unsigned int left, unsigned int right)
 {
 	if (left >= right)
 		return;
@@ -274,11 +274,11 @@ void Rainbow_QSort(RTable* rt, unsigned int left, unsigned int right)
 	swap(rt, storeIndex, left);
 
 	if (storeIndex)
-		Rainbow_QSort(rt, left, storeIndex-1);
-	Rainbow_QSort(rt, storeIndex, right);
+		RTable_QSort(rt, left, storeIndex-1);
+	RTable_QSort(rt, storeIndex, right);
 }
 
-int Rainbow_BFind(RTable* rt, char* hash)
+int RTable_BFind(RTable* rt, char* hash)
 {
 	unsigned int start = 0;
 	unsigned int end   = rt->a_chains-1;
@@ -298,7 +298,7 @@ int Rainbow_BFind(RTable* rt, char* hash)
 
 // Hash table implementation
 static unsigned int HashFun(const char* str, unsigned int len);
-unsigned int Rainbow_HFind(RTable* rt, char* str)
+unsigned int RTable_HFind(RTable* rt, char* str)
 {
 	unsigned int cur = HashFun(str, rt->slen) % rt->a_chains;
 	while (CACTIVE(cur) && bstrncmp(CHASH(cur), str, rt->slen) != 0)

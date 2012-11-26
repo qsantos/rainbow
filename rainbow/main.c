@@ -133,14 +133,14 @@ int main(int argc, char** argv)
 
 		// load table
 		if (mode != RTNEW)
-			rt = Rainbow_FromFileN(slen, charset, l_chains, param2);
+			rt = RTable_FromFileN(slen, charset, l_chains, param2);
 
 		if (!rt)
 		{
 			if (mode == RTRES)
 				ERROR("No table computation to resume\n")
 			else
-				rt = Rainbow_New(slen, charset, l_chains, atoi(param1));
+				rt = RTable_New(slen, charset, l_chains, atoi(param1));
 		}
 
 		// generate more chains
@@ -148,7 +148,7 @@ int main(int argc, char** argv)
 		signal(SIGINT, stopGenerating);
 		while (generate && rt->n_chains < rt->a_chains)
 		{
-			Rainbow_FindChain(rt);
+			RTable_FindChain(rt);
 			if (rt->n_chains % 1024 == 0)
 			{
 				rewriteLine();
@@ -162,15 +162,15 @@ int main(int argc, char** argv)
 		if (generate)
 		{
 			printf("Sorting table\n");
-			Rainbow_Sort(rt);
+			RTable_Sort(rt);
 			printf("Done\n");
 		}
 		else
 			printf("Pausing table generation (%u chains generated)\n", rt->n_chains);
 
 		// save table
-		Rainbow_ToFileN(rt, param2);
-		Rainbow_Delete(rt);
+		RTable_ToFileN(rt, param2);
+		RTable_Delete(rt);
 		break;
 
 	case MERGE:
@@ -180,45 +180,45 @@ int main(int argc, char** argv)
 			ERROR("At least the first table must be given in the parameters\n")
 
 		// load tables
-		RTable* rt1 = Rainbow_FromFileN(slen, charset, l_chains, param1);
-		RTable* rt2 = Rainbow_FromFileN(slen, charset, l_chains, param2);
+		RTable* rt1 = RTable_FromFileN(slen, charset, l_chains, param1);
+		RTable* rt2 = RTable_FromFileN(slen, charset, l_chains, param2);
 
 		if (!rt1) ERROR("Could not load first table\n")
 		if (!rt2) ERROR("Could not load second table\n")
 
 		// merge tables
-		rt = Rainbow_Merge(rt1, rt2);
+		rt = RTable_Merge(rt1, rt2);
 		printf("%u chains after merge\n", rt->n_chains);
 
 		// free tables
-		Rainbow_Delete(rt2);
-		Rainbow_Delete(rt1);
+		RTable_Delete(rt2);
+		RTable_Delete(rt1);
 
 		// save merged table
-		Rainbow_ToFileN(rt, param3);
-		Rainbow_Delete(rt);
+		RTable_ToFileN(rt, param3);
+		RTable_Delete(rt);
 		break;
 
 	case RSIZE:
 		if (!param1) ERROR("The new size and the source table must be provided\n")
 		if (!param2) ERROR("At least the source table must be given in the parameters\n")
 
-		RTable* src = Rainbow_FromFileN(slen, charset, l_chains, param2);
-		RTable* dst = Rainbow_New      (slen, charset, l_chains, atoi(param1));
+		RTable* src = RTable_FromFileN(slen, charset, l_chains, param2);
+		RTable* dst = RTable_New      (slen, charset, l_chains, atoi(param1));
 
 		if (!src) ERROR("Could no load source table\n")
 
-		Rainbow_Transfer(src, dst);
+		RTable_Transfer(src, dst);
 		printf("%u chains transfered\n", dst->n_chains);
 
-		Rainbow_ToFileN(dst, param3);
-		Rainbow_Delete(src);
-		Rainbow_Delete(dst);
+		RTable_ToFileN(dst, param3);
+		RTable_Delete(src);
+		RTable_Delete(dst);
 		break;
 
 	case TESTS:
 		// load table
-		rt = Rainbow_FromFileN(slen, charset, l_chains, param2);
+		rt = RTable_FromFileN(slen, charset, l_chains, param2);
 		if (!rt) ERROR("Could no load table\n")
 
 		printf("Cracking some hashes\n");
@@ -236,7 +236,7 @@ int main(int argc, char** argv)
 			MD5(slen, (uint8_t*) str, (uint8_t*) hash);
 
 			// crack the hash
-			if (Rainbow_Reverse(rt, hash, tmp))
+			if (RTable_Reverse(rt, hash, tmp))
 			{
 				// check the cracked string
 				if (bstrncmp(str, tmp, slen))
@@ -259,19 +259,19 @@ int main(int argc, char** argv)
 		}
 		printf("\n");
 
-		Rainbow_Delete(rt);
+		RTable_Delete(rt);
 		break;
 
 	case CRACK:
 		if (!param1) ERROR("Hash not supplied\n")
 
 		// load table
-		rt = Rainbow_FromFileN(slen, charset, l_chains, param2);
+		rt = RTable_FromFileN(slen, charset, l_chains, param2);
 		if (!rt) ERROR("Could no load table\n")
 
 		// try and crack hash
 		hex2hash(param1, hash, 16);
-		int res = Rainbow_Reverse(rt, hash, str);
+		int res = RTable_Reverse(rt, hash, str);
 
 		if (res)
 		{
@@ -281,9 +281,9 @@ int main(int argc, char** argv)
 			printf("\n");
 		}
 		else
-			ERROR("Could not reverse hash\n")
+			printf("Could not reverse hash\n");
 
-		Rainbow_Delete(rt);
+		RTable_Delete(rt);
 		break;
 	}
 

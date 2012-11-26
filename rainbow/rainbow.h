@@ -26,29 +26,29 @@ typedef struct
 } RTable;
 
 // generation
-RTable* Rainbow_New      (unsigned int length, char* chars, unsigned int depth, unsigned int count);
-void    Rainbow_Delete   (RTable* rt);
-char    Rainbow_AddChain (RTable* rt, char* hash, char* str);
-void    Rainbow_Transfer (RTable* rt1, RTable* rt2);
-char    Rainbow_FindChain(RTable* rt);
-void    Rainbow_Sort     (RTable* rt);
+RTable* RTable_New      (unsigned int length, char* chars, unsigned int depth, unsigned int count);
+void    RTable_Delete   (RTable* rt);
+char    RTable_AddChain (RTable* rt, char* hash, char* str);
+void    RTable_Transfer (RTable* rt1, RTable* rt2);
+char    RTable_FindChain(RTable* rt);
+void    RTable_Sort     (RTable* rt);
 
 // loading and storing
-void    Rainbow_ToFile   (RTable* rt, FILE* f);
-RTable* Rainbow_FromFile (unsigned int slen, char* charset, unsigned int l_chains, FILE* f);
-void    Rainbow_ToFileN  (RTable* rt, const char* filename);
-RTable* Rainbow_FromFileN(unsigned int slen, char* charset, unsigned int l_chains, const char* filename);
+void    RTable_ToFile   (RTable* rt, FILE* f);
+RTable* RTable_FromFile (unsigned int slen, char* charset, unsigned int l_chains, FILE* f);
+void    RTable_ToFileN  (RTable* rt, const char* filename);
+RTable* RTable_FromFileN(unsigned int slen, char* charset, unsigned int l_chains, const char* filename);
 
 // misc
-RTable* Rainbow_Merge    (RTable* rt1, RTable* rt2);
-void    Rainbow_Print    (RTable* rt);
-char    Rainbow_Reverse  (RTable* rt, char* target, char* dest);
+RTable* RTable_Merge    (RTable* rt1, RTable* rt2);
+void    RTable_Print    (RTable* rt);
+char    RTable_Reverse  (RTable* rt, char* target, char* dest);
 
 // internal use
-void         Rainbow_Mask (RTable* rt, unsigned int step, char* hash, char* str); // hash to str "mask function"
-void         Rainbow_QSort(RTable* rt, unsigned int left, unsigned int right);    // quick sort
-int          Rainbow_BFind(RTable* rt, char* hash);                               // binary search
-unsigned int Rainbow_HFind(RTable* rt, char* str);                                // hash table search
+void         RTable_Mask (RTable* rt, unsigned int step, char* hash, char* str); // hash to str "mask function"
+void         RTable_QSort(RTable* rt, unsigned int left, unsigned int right);    // quick sort
+int          RTable_BFind(RTable* rt, char* hash);                               // binary search
+unsigned int RTable_HFind(RTable* rt, char* str);                                // hash table search
 
 // useful functions
 char bstrncmp   (char* a, char* b, int n);
