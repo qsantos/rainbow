@@ -224,7 +224,6 @@ int main(int argc, char** argv)
 		printf("Cracking some hashes\n");
 
 		unsigned int count = 0;
-		srandom(17);
 		unsigned int n_tests = param1 ? atoi(param1) : 1000;
 		for (unsigned int i = 0; i < n_tests; i++)
 		{
