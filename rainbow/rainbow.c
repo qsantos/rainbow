@@ -269,18 +269,18 @@ void RTable_QSort(RTable* rt, unsigned int left, unsigned int right)
 	if (left >= right)
 		return;
 
-	swap(rt, (left+right)/2, left);
-	char* pivotValue = CHASH(left);
-	unsigned int storeIndex = left+1;
+	swap(rt, (left+right)/2, right);
+	char* pivotValue = CHASH(right);
+	unsigned int storeIndex = left;
 	for (unsigned int i = left; i < right; i++)
 		if (bstrncmp(CHASH(i), pivotValue, rt->hlen) < 0)
 			swap(rt, i, storeIndex++);
 
-	swap(rt, storeIndex, left);
+	swap(rt, storeIndex, right);
 
 	if (storeIndex)
 		RTable_QSort(rt, left, storeIndex-1);
-	RTable_QSort(rt, storeIndex, right);
+	RTable_QSort(rt, storeIndex+1, right);
 }
 
 int RTable_BFind(RTable* rt, char* hash)
