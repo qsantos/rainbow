@@ -1,5 +1,5 @@
-CFLAGS  = -Wall -Wextra -Werror -pedantic -std=c99 -O3 -D_XOPEN_SOURCE=600 -g
-LDFLAGS = -O3 -lpthread
+CFLAGS  = -Wall -Wextra -Werror -pedantic -std=c99 -O3 -D_XOPEN_SOURCE=600
+LDFLAGS = -O3
 TARGET  = rainbow
 SRC     = main.c md5.c rainbow.c
 OBJ     = $(SRC:.c=.o)
