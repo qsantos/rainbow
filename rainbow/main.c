@@ -232,7 +232,7 @@ int main(int argc, char** argv)
 				str[j] = charset[random() % clen];
 
 			// hash it
-			MD5(slen, (uint8_t*) str, (uint8_t*) hash);
+			MD5((uint8_t*) hash, (uint8_t*) str, slen);
 
 			// crack the hash
 			if (RTable_Reverse(rt, hash, tmp))

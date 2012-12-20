@@ -90,11 +90,11 @@ char RTable_FindChain(RTable* rt)
 		rt->bufstr1[i] = rt->charset[random() % rt->clen];
 
 	// start a new chain from 'str'
-	MD5((uint64_t) rt->slen, (uint8_t*) rt->bufstr1, (uint8_t*) rt->bufhash);
+	MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr1, rt->slen);
 	for (unsigned int step = 1; step < rt->l_chains; step++)
 	{
 		RTable_Mask(rt, step, rt->bufhash, rt->bufstr2);
-		MD5((uint64_t) rt->slen, (uint8_t*) rt->bufstr2, (uint8_t*) rt->bufhash);
+		MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr1, rt->slen);
 	}
 
 	return RTable_AddChain(rt, rt->bufhash, rt->bufstr1);
@@ -225,7 +225,7 @@ char RTable_Reverse(RTable* rt, char* target, char* dest)
 		for (unsigned int step = firstStep; step < rt->l_chains; step++)
 		{
 			RTable_Mask(rt, step, rt->bufhash, rt->bufstr1);
-			MD5((uint64_t) rt->slen, (uint8_t*) rt->bufstr1, (uint8_t*) rt->bufhash);
+			MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr1, rt->slen);
 		}
 
 		// find the hash's chain
@@ -235,12 +235,12 @@ char RTable_Reverse(RTable* rt, char* target, char* dest)
 
 		// get the previous string
 		memcpy(rt->bufstr1, CSTR(res), rt->slen);
-		MD5((uint64_t) rt->slen, (uint8_t*) rt->bufstr1, (uint8_t*) rt->bufhash);
+		MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr1, rt->slen);
 		unsigned int step = 1;
 		while (step < rt->l_chains && bstrncmp(rt->bufhash, target, rt->hlen) != 0)
 		{
 			RTable_Mask(rt, step++, rt->bufhash, rt->bufstr1);
-			MD5((uint64_t) rt->slen, (uint8_t*) rt->bufstr1, (uint8_t*) rt->bufhash);
+			MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr1, rt->slen);
 		}
 		if (step < rt->l_chains)
 		{
