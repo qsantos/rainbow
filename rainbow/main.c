@@ -146,10 +146,12 @@ int main(int argc, char** argv)
 		// generate more chains
 		printf("Generating chains\n");
 		signal(SIGINT, stopGenerating);
+		unsigned int progressStep = rt->a_chains / 10000;
+		if (!progressStep) progressStep = 1;
 		while (generate && rt->n_chains < rt->a_chains)
 		{
 			RTable_FindChain(rt);
-			if (rt->n_chains % 1024 == 0)
+			if (rt->n_chains % progressStep == 0)
 			{
 				rewriteLine();
 				printf("Progress: %.2f%%", (float) 100 * rt->n_chains / rt->a_chains);
