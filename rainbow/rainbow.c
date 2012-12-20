@@ -94,7 +94,7 @@ char RTable_FindChain(RTable* rt)
 	for (unsigned int step = 1; step < rt->l_chains; step++)
 	{
 		RTable_Mask(rt, step, rt->bufhash, rt->bufstr2);
-		MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr1, rt->slen);
+		MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr2, rt->slen);
 	}
 
 	return RTable_AddChain(rt, rt->bufhash, rt->bufstr1);
