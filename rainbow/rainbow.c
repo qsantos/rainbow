@@ -211,13 +211,13 @@ void RTable_Print(RTable* rt)
 	}
 }
 
-char RTable_Reverse(RTable* rt, const char* target, char* dest)
+char RTable_Reverse(RTable* rt, const char* hash, char* dst)
 {
 	// test for every distance to the end point
 	for (u32 firstStep = rt->l_chains; firstStep >= 1; firstStep--)
 	{
 		// get the end point hash
-		memcpy(rt->bufhash, target, rt->hlen);
+		memcpy(rt->bufhash, hash, rt->hlen);
 		for (u32 step = firstStep; step < rt->l_chains; step++)
 		{
 			RTable_Reduce(rt, step, rt->bufhash, rt->bufstr1);
@@ -233,15 +233,15 @@ char RTable_Reverse(RTable* rt, const char* target, char* dest)
 		memcpy(rt->bufstr1, CSTR(res), rt->slen);
 		MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr1, rt->slen);
 		u32 step = 1;
-		while (step < rt->l_chains && bstrncmp(rt->bufhash, target, rt->hlen) != 0)
+		while (step < rt->l_chains && bstrncmp(rt->bufhash, hash, rt->hlen) != 0)
 		{
 			RTable_Reduce(rt, step++, rt->bufhash, rt->bufstr1);
 			MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr1, rt->slen);
 		}
 		if (step < rt->l_chains)
 		{
-			if (dest)
-				memcpy(dest, rt->bufstr1, rt->slen);
+			if (dst)
+				memcpy(dst, rt->bufstr1, rt->slen);
 			return 1;
 		}
 	}

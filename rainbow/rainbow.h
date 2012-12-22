@@ -45,7 +45,7 @@ RTable* RTable_FromFileN(u32 slen, const char* charset, u32 l_chains, const char
 // misc
 RTable* RTable_Merge    (RTable* rt1, RTable* rt2);
 void    RTable_Print    (RTable* rt);
-char    RTable_Reverse  (RTable* rt, const char* target, char* dest);
+char    RTable_Reverse  (RTable* rt, const char* hash, char* dst);
 
 // internal use
 void RTable_Reduce(RTable* rt, u32 step, const char* hash, char* str); // hash to string reduce function
