@@ -290,5 +290,6 @@ int main(int argc, char** argv)
 
 	free(tmp);
 	free(str);
+
 	return 0;
 }
