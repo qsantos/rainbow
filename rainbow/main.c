@@ -141,7 +141,6 @@ int main(int argc, char** argv)
 		{
 			if (RBTable_FindChain(&rbt))
 			{
-				n_chains++;
 				rewriteLine();
 				printf("%lu chains generated", n_chains);
 				fflush(stdout);
