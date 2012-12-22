@@ -150,7 +150,13 @@ int main(int argc, char** argv)
 		if (!progressStep) progressStep = 1;
 		while (generate && rt->n_chains < rt->a_chains)
 		{
-			if (RTable_FindChain(rt) && rt->n_chains % progressStep == 0)
+			char res = RTable_FindChain(rt);
+			if (res < 0)
+			{
+				printf("Nothing more to do\n");
+				generate = 0;
+			}
+			else if (res && rt->n_chains % progressStep == 0)
 			{
 				rewriteLine();
 				printf("Progress: %.2f%%", (float) 100 * rt->n_chains / rt->a_chains);

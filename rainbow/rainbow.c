@@ -97,7 +97,7 @@ char RTable_FindChain(RTable* rt)
 		c++;
 	}
 	if (!c)
-		exit(1);
+		return -1;
 
 	// start a new chain from 'str'
 	MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->curstr, rt->slen);
