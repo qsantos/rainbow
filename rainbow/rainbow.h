@@ -22,8 +22,8 @@ typedef struct
 	u32   clen;
 	u32   l_chains;
 
-	char* bufstr1;
-	char* bufstr2;
+	char* curstr;
+	char* bufstr;
 	char* bufhash;
 	char* bufchain;
 } RTable;
@@ -33,7 +33,7 @@ RTable* RTable_New      (u32 length, const char* chars, u32 depth, u32 count);
 void    RTable_Delete   (RTable* rt);
 char    RTable_AddChain (RTable* rt, const char* hash, const char* str);
 void    RTable_Transfer (RTable* rt1, RTable* rt2);
-char    RTable_FindChain(RTable* rt, const char* startString);
+char    RTable_FindChain(RTable* rt);
 void    RTable_Sort     (RTable* rt);
 
 // loading and storing

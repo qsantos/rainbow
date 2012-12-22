@@ -36,18 +36,19 @@ RTable* RTable_New(u32 length, const char* chars, u32 depth, u32 count)
 	rt->a_chains = count;
 
 	rt->chains   = (char*) malloc(rt->sizeofChain * rt->a_chains);
-	rt->bufstr1  = (char*) malloc(rt->slen);
-	rt->bufstr2  = (char*) malloc(rt->slen);
+	rt->curstr   = (char*) malloc(rt->slen);
+	rt->bufstr   = (char*) malloc(rt->slen);
 	rt->bufhash  = (char*) malloc(rt->hlen);
 	rt->bufchain = (char*) malloc(rt->sizeofChain);
 
 	assert(rt->chains);
-	assert(rt->bufstr1);
-	assert(rt->bufstr2);
+	assert(rt->curstr);
+	assert(rt->bufstr);
 	assert(rt->bufhash);
 	assert(rt->bufchain);
 
-	memset(rt->chains, 0, rt->sizeofChain * rt->a_chains);
+	memset(rt->chains, 0,              rt->sizeofChain * rt->a_chains);
+	memset(rt->curstr, rt->charset[0], rt->slen);
 
 	return rt;
 }
@@ -56,8 +57,8 @@ void RTable_Delete(RTable* rt)
 {
 	free(rt->bufchain);
 	free(rt->bufhash);
-	free(rt->bufstr2);
-	free(rt->bufstr1);
+	free(rt->bufstr);
+	free(rt->curstr);
 	free(rt->chains);
 }
 
@@ -83,17 +84,30 @@ void RTable_Transfer(RTable* rt1, RTable* rt2)
 			RTable_AddChain(rt2, CHASH1(i), CSTR1(i));
 }
 
-char RTable_FindChain(RTable* rt, const char* startString)
+char RTable_FindChain(RTable* rt)
 {
+	// pick a starting point
+	char* c = rt->curstr;
+	while (c)
+	{
+		char* n = strchr(rt->charset, *c);
+		if ((*c = n[1]))
+			break;
+		*c = rt->charset[0];
+		c++;
+	}
+	if (!c)
+		exit(1);
+
 	// start a new chain from 'str'
-	MD5((uint8_t*) rt->bufhash, (uint8_t*) startString, rt->slen);
+	MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->curstr, rt->slen);
 	for (u32 step = 1; step < rt->l_chains; step++)
 	{
-		RTable_Reduce(rt, step, rt->bufhash, rt->bufstr1);
-		MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr1, rt->slen);
+		RTable_Reduce(rt, step, rt->bufhash, rt->bufstr);
+		MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr, rt->slen);
 	}
 
-	return RTable_AddChain(rt, rt->bufhash, startString);
+	return RTable_AddChain(rt, rt->bufhash, rt->curstr);
 }
 
 void RTable_Sort(RTable* rt)
@@ -103,6 +117,7 @@ void RTable_Sort(RTable* rt)
 
 void RTable_ToFile(RTable* rt, FILE* f)
 {
+	fwrite(rt->curstr, 1,               rt->slen,     f);
 	fwrite(rt->chains, rt->sizeofChain, rt->a_chains, f);
 }
 
@@ -121,7 +136,7 @@ RTable* RTable_FromFile(u32 slen, const char* charset, u32 l_chains, FILE* f)
 	// TODO
 	u32 hlen = 16;
 	u32 sizeofChain = 1 + hlen + slen;
-	if (size % sizeofChain)
+	if (size % sizeofChain != slen)
 	{
 		fprintf(stderr, "Invalid file\n");
 		exit(1);
@@ -129,6 +144,7 @@ RTable* RTable_FromFile(u32 slen, const char* charset, u32 l_chains, FILE* f)
 	u32 a_chains = size / sizeofChain;
 
 	RTable* rt = RTable_New(slen, charset, l_chains, a_chains);
+	fread(rt->curstr, 1,               rt->slen,     f);
 	fread(rt->chains, rt->sizeofChain, rt->a_chains, f);
 	rt->n_chains = 0;
 	for (u32 i = 0; i < rt->a_chains; i++)
@@ -220,8 +236,8 @@ char RTable_Reverse(RTable* rt, const char* hash, char* dst)
 		memcpy(rt->bufhash, hash, rt->hlen);
 		for (u32 step = firstStep; step < rt->l_chains; step++)
 		{
-			RTable_Reduce(rt, step, rt->bufhash, rt->bufstr1);
-			MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr1, rt->slen);
+			RTable_Reduce(rt, step, rt->bufhash, rt->bufstr);
+			MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr, rt->slen);
 		}
 
 		// find the hash's chain
@@ -230,18 +246,18 @@ char RTable_Reverse(RTable* rt, const char* hash, char* dst)
 			continue;
 
 		// get the previous string
-		memcpy(rt->bufstr1, CSTR(res), rt->slen);
-		MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr1, rt->slen);
+		memcpy(rt->bufstr, CSTR(res), rt->slen);
+		MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr, rt->slen);
 		u32 step = 1;
 		while (step < rt->l_chains && bstrncmp(rt->bufhash, hash, rt->hlen) != 0)
 		{
-			RTable_Reduce(rt, step++, rt->bufhash, rt->bufstr1);
-			MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr1, rt->slen);
+			RTable_Reduce(rt, step++, rt->bufhash, rt->bufstr);
+			MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr, rt->slen);
 		}
 		if (step < rt->l_chains)
 		{
 			if (dst)
-				memcpy(dst, rt->bufstr1, rt->slen);
+				memcpy(dst, rt->bufstr, rt->slen);
 			return 1;
 		}
 	}
