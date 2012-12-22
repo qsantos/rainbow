@@ -139,8 +139,7 @@ int main(int argc, char** argv)
 		signal(SIGINT, stopGenerating);
 		while (generate)
 		{
-			n_chains += RBTable_FindChain(&rbt);
-			if (n_chains % 1 == 0)
+			if (RBTable_FindChain(&rbt))
 			{
 				rewriteLine();
 				printf("%lu chains generated", n_chains);
