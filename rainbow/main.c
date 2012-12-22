@@ -153,6 +153,7 @@ int main(int argc, char** argv)
 			char res = RTable_FindChain(rt);
 			if (res < 0)
 			{
+				printf("\n");
 				printf("Nothing more to do\n");
 				generate = 0;
 			}

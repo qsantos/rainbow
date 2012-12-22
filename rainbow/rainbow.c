@@ -88,7 +88,7 @@ char RTable_FindChain(RTable* rt)
 {
 	// pick a starting point
 	char* c = rt->curstr;
-	while (c)
+	while (*c)
 	{
 		char* n = strchr(rt->charset, *c);
 		if ((*c = n[1]))
@@ -96,7 +96,7 @@ char RTable_FindChain(RTable* rt)
 		*c = rt->charset[0];
 		c++;
 	}
-	if (!c)
+	if (!*c)
 		return -1;
 
 	// start a new chain from 'str'
