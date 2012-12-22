@@ -33,7 +33,7 @@ RTable* RTable_New      (u32 length, char* chars, u32 depth, u32 count);
 void    RTable_Delete   (RTable* rt);
 char    RTable_AddChain (RTable* rt, char* hash, char* str);
 void    RTable_Transfer (RTable* rt1, RTable* rt2);
-char    RTable_FindChain(RTable* rt);
+char    RTable_FindChain(RTable* rt, char* startString);
 void    RTable_Sort     (RTable* rt);
 
 // loading and storing

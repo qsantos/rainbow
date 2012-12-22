@@ -83,21 +83,17 @@ void RTable_Transfer(RTable* rt1, RTable* rt2)
 			RTable_AddChain(rt2, CHASH1(i), CSTR1(i));
 }
 
-char RTable_FindChain(RTable* rt)
+char RTable_FindChain(RTable* rt, char* startString)
 {
-	// pick a starting point
-	for (u32 i = 0; i < rt->slen; i++)
-		rt->bufstr1[i] = rt->charset[random() % rt->clen];
-
 	// start a new chain from 'str'
-	MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr1, rt->slen);
+	MD5((uint8_t*) rt->bufhash, (uint8_t*) startString, rt->slen);
 	for (u32 step = 1; step < rt->l_chains; step++)
 	{
-		RTable_Reduce(rt, step, rt->bufhash, rt->bufstr2);
-		MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr2, rt->slen);
+		RTable_Reduce(rt, step, rt->bufhash, rt->bufstr1);
+		MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr1, rt->slen);
 	}
 
-	return RTable_AddChain(rt, rt->bufhash, rt->bufstr1);
+	return RTable_AddChain(rt, rt->bufhash, startString);
 }
 
 void RTable_Sort(RTable* rt)

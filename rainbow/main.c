@@ -150,7 +150,12 @@ int main(int argc, char** argv)
 		if (!progressStep) progressStep = 1;
 		while (generate && rt->n_chains < rt->a_chains)
 		{
-			if (RTable_FindChain(rt) && rt->n_chains % progressStep == 0)
+			char start[16];
+			// pick a starting point
+			for (u32 i = 0; i < 16; i++)
+				start[i] = rt->charset[random() % clen];
+
+			if (RTable_FindChain(rt, start) && rt->n_chains % progressStep == 0)
 			{
 				rewriteLine();
 				printf("Progress: %.2f%%", (float) 100 * rt->n_chains / rt->a_chains);
