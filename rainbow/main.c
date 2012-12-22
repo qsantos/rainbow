@@ -137,7 +137,7 @@ int main(int argc, char** argv)
 		// generate more chains
 		printf("Generating chains\n");
 		signal(SIGINT, stopGenerating);
-		while (generate)
+		while (generate && n_chains > a_chains)
 		{
 			n_chains += RBTable_FindChain(&rbt);
 			if (n_chains % 1 == 0)
