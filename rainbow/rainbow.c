@@ -93,7 +93,7 @@ char RTable_FindChain(RTable* rt)
 	MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr1, rt->slen);
 	for (u32 step = 1; step < rt->l_chains; step++)
 	{
-		RTable_Mask(rt, step, rt->bufhash, rt->bufstr2);
+		RTable_Reduce(rt, step, rt->bufhash, rt->bufstr2);
 		MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr2, rt->slen);
 	}
 
@@ -224,7 +224,7 @@ char RTable_Reverse(RTable* rt, char* target, char* dest)
 		memcpy(rt->bufhash, target, rt->hlen);
 		for (u32 step = firstStep; step < rt->l_chains; step++)
 		{
-			RTable_Mask(rt, step, rt->bufhash, rt->bufstr1);
+			RTable_Reduce(rt, step, rt->bufhash, rt->bufstr1);
 			MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr1, rt->slen);
 		}
 
@@ -239,7 +239,7 @@ char RTable_Reverse(RTable* rt, char* target, char* dest)
 		u32 step = 1;
 		while (step < rt->l_chains && bstrncmp(rt->bufhash, target, rt->hlen) != 0)
 		{
-			RTable_Mask(rt, step++, rt->bufhash, rt->bufstr1);
+			RTable_Reduce(rt, step++, rt->bufhash, rt->bufstr1);
 			MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr1, rt->slen);
 		}
 		if (step < rt->l_chains)
@@ -252,7 +252,7 @@ char RTable_Reverse(RTable* rt, char* target, char* dest)
 	return 0;
 }
 
-void RTable_Mask(RTable* rt, u32 step, char* hash, char* str)
+void RTable_Reduce(RTable* rt, u32 step, char* hash, char* str)
 {
 	for (u32 j = 0; j < rt->slen; j++, str++, hash++)
 		*str = rt->charset[(u8)(*hash ^ step) % rt->clen];

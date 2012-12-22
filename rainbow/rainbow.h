@@ -48,10 +48,10 @@ void    RTable_Print    (RTable* rt);
 char    RTable_Reverse  (RTable* rt, char* target, char* dest);
 
 // internal use
-void RTable_Mask (RTable* rt, u32 step, char* hash, char* str); // hash to str "mask function"
-void RTable_QSort(RTable* rt, u32 left, u32 right);    // quick sort
-int  RTable_BFind(RTable* rt, char* hash);                               // binary search
-u32  RTable_HFind(RTable* rt, char* str);                                // hash table search
+void RTable_Reduce(RTable* rt, u32 step, char* hash, char* str); // hash to string reduce function
+void RTable_QSort (RTable* rt, u32 left, u32 right);             // quick sort
+int  RTable_BFind (RTable* rt, char* hash);                      // binary search
+u32  RTable_HFind (RTable* rt, char* str);                       // hash table search
 
 // useful functions
 char bstrncmp   (char* a, char* b, int n);
