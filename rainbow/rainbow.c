@@ -20,7 +20,7 @@
 #define   CSTR1(I) (rt1->chains + (I)*rt1->sizeofChain + 1 + rt1->hlen)
 #define   CSTR2(I) (rt2->chains + (I)*rt2->sizeofChain + 1 + rt2->hlen)
 
-RTable* RTable_New(unsigned int length, char* chars, unsigned int depth, unsigned int count)
+RTable* RTable_New(u32 length, char* chars, u32 depth, u32 count)
 {
 	RTable* rt = (RTable*) malloc(sizeof(RTable));
 
@@ -64,7 +64,7 @@ void RTable_Delete(RTable* rt)
 char RTable_AddChain(RTable* rt, char* hash, char* str)
 {
 	// collision detection
-	unsigned int htid = RTable_HFind(rt, hash);
+	u32 htid = RTable_HFind(rt, hash);
 	if (!CACTIVE(htid))
 	{
 		CACTIVE(htid) = 1;
@@ -78,7 +78,7 @@ char RTable_AddChain(RTable* rt, char* hash, char* str)
 
 void RTable_Transfer(RTable* rt1, RTable* rt2)
 {
-	for (unsigned int i = 0; i < rt1->a_chains; i++)
+	for (u32 i = 0; i < rt1->a_chains; i++)
 		if (CACTIVE1(i))
 			RTable_AddChain(rt2, CHASH1(i), CSTR1(i));
 }
@@ -86,12 +86,12 @@ void RTable_Transfer(RTable* rt1, RTable* rt2)
 char RTable_FindChain(RTable* rt)
 {
 	// pick a starting point
-	for (unsigned int i = 0; i < rt->slen; i++)
+	for (u32 i = 0; i < rt->slen; i++)
 		rt->bufstr1[i] = rt->charset[random() % rt->clen];
 
 	// start a new chain from 'str'
 	MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr1, rt->slen);
-	for (unsigned int step = 1; step < rt->l_chains; step++)
+	for (u32 step = 1; step < rt->l_chains; step++)
 	{
 		RTable_Mask(rt, step, rt->bufhash, rt->bufstr2);
 		MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr2, rt->slen);
@@ -110,7 +110,7 @@ void RTable_ToFile(RTable* rt, FILE* f)
 	fwrite(rt->chains, rt->sizeofChain, rt->a_chains, f);
 }
 
-RTable* RTable_FromFile(unsigned int slen, char* charset, unsigned int l_chains, FILE* f)
+RTable* RTable_FromFile(u32 slen, char* charset, u32 l_chains, FILE* f)
 {
 	if (ftell(f) != 0)
 	{
@@ -119,23 +119,23 @@ RTable* RTable_FromFile(unsigned int slen, char* charset, unsigned int l_chains,
 	}
 
 	fseek(f, 0, SEEK_END);
-	unsigned int size = ftell(f);
+	u32 size = ftell(f);
 	fseek(f, 0, SEEK_SET);
 
 	// TODO
-	unsigned int hlen = 16;
-	unsigned int sizeofChain = 1 + hlen + slen;
+	u32 hlen = 16;
+	u32 sizeofChain = 1 + hlen + slen;
 	if (size % sizeofChain)
 	{
 		fprintf(stderr, "Invalid file\n");
 		exit(1);
 	}
-	unsigned int a_chains = size / sizeofChain;
+	u32 a_chains = size / sizeofChain;
 
 	RTable* rt = RTable_New(slen, charset, l_chains, a_chains);
 	fread(rt->chains, rt->sizeofChain, rt->a_chains, f);
 	rt->n_chains = 0;
-	for (unsigned int i = 0; i < rt->a_chains; i++)
+	for (u32 i = 0; i < rt->a_chains; i++)
 		if (CACTIVE(i))
 			rt->n_chains++;
 	printf("%u chains loaded\n", rt->n_chains);
@@ -154,7 +154,7 @@ void RTable_ToFileN(RTable* rt, const char* filename)
 	fclose(f);
 }
 
-RTable* RTable_FromFileN(unsigned int slen, char* charset, unsigned int l_chains, const char* filename)
+RTable* RTable_FromFileN(u32 slen, char* charset, u32 l_chains, const char* filename)
 {
 	FILE* f = filename ? fopen(filename, "r") : stdin;
 	if (!f)
@@ -175,9 +175,9 @@ RTable* RTable_Merge(RTable* rt1, RTable* rt2)
 	assert(rt2->a_chains == rt2->n_chains);
 
 	RTable* rt = RTable_New(rt1->slen, rt1->charset, rt1->l_chains, rt1->a_chains + rt2->a_chains);
-	unsigned int i1 = 0;
-	unsigned int i2 = 0;
-	unsigned int i  = 0;
+	u32 i1 = 0;
+	u32 i2 = 0;
+	u32 i  = 0;
 	while (i1 < rt1->a_chains || i2 < rt2->a_chains)
 	{
 		int c = bstrncmp(CHASH1(i1), CHASH2(i2), rt1->hlen);
@@ -206,7 +206,7 @@ RTable* RTable_Merge(RTable* rt1, RTable* rt2)
 
 void RTable_Print(RTable* rt)
 {
-	for (unsigned int i = 0; i < rt->a_chains; i++)
+	for (u32 i = 0; i < rt->a_chains; i++)
 	{
 		printHash(CHASH(i), rt->hlen);
 		printf(" ");
@@ -218,11 +218,11 @@ void RTable_Print(RTable* rt)
 char RTable_Reverse(RTable* rt, char* target, char* dest)
 {
 	// test for every distance to the end point
-	for (unsigned int firstStep = rt->l_chains; firstStep >= 1; firstStep--)
+	for (u32 firstStep = rt->l_chains; firstStep >= 1; firstStep--)
 	{
 		// get the end point hash
 		memcpy(rt->bufhash, target, rt->hlen);
-		for (unsigned int step = firstStep; step < rt->l_chains; step++)
+		for (u32 step = firstStep; step < rt->l_chains; step++)
 		{
 			RTable_Mask(rt, step, rt->bufhash, rt->bufstr1);
 			MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr1, rt->slen);
@@ -236,7 +236,7 @@ char RTable_Reverse(RTable* rt, char* target, char* dest)
 		// get the previous string
 		memcpy(rt->bufstr1, CSTR(res), rt->slen);
 		MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr1, rt->slen);
-		unsigned int step = 1;
+		u32 step = 1;
 		while (step < rt->l_chains && bstrncmp(rt->bufhash, target, rt->hlen) != 0)
 		{
 			RTable_Mask(rt, step++, rt->bufhash, rt->bufstr1);
@@ -252,27 +252,27 @@ char RTable_Reverse(RTable* rt, char* target, char* dest)
 	return 0;
 }
 
-void RTable_Mask(RTable* rt, unsigned int step, char* hash, char* str)
+void RTable_Mask(RTable* rt, u32 step, char* hash, char* str)
 {
-	for (unsigned int j = 0; j < rt->slen; j++, str++, hash++)
-		*str = rt->charset[(unsigned char)(*hash ^ step) % rt->clen];
+	for (u32 j = 0; j < rt->slen; j++, str++, hash++)
+		*str = rt->charset[(u8)(*hash ^ step) % rt->clen];
 }
 
-static void swap(RTable* rt, unsigned int a, unsigned int b)
+static void swap(RTable* rt, u32 a, u32 b)
 {
 	memcpy(rt->bufchain,                   rt->chains + a*rt->sizeofChain, rt->sizeofChain);
 	memcpy(rt->chains + a*rt->sizeofChain, rt->chains + b*rt->sizeofChain, rt->sizeofChain);
 	memcpy(rt->chains + b*rt->sizeofChain, rt->bufchain,                   rt->sizeofChain);
 }
-void RTable_QSort(RTable* rt, unsigned int left, unsigned int right)
+void RTable_QSort(RTable* rt, u32 left, u32 right)
 {
 	if (left >= right)
 		return;
 
 	swap(rt, (left+right)/2, right);
 	char* pivotValue = CHASH(right);
-	unsigned int storeIndex = left;
-	for (unsigned int i = left; i < right; i++)
+	u32 storeIndex = left;
+	for (u32 i = left; i < right; i++)
 		if (bstrncmp(CHASH(i), pivotValue, rt->hlen) < 0)
 			swap(rt, i, storeIndex++);
 
@@ -285,11 +285,11 @@ void RTable_QSort(RTable* rt, unsigned int left, unsigned int right)
 
 int RTable_BFind(RTable* rt, char* hash)
 {
-	unsigned int start = 0;
-	unsigned int end   = rt->a_chains-1;
+	u32 start = 0;
+	u32 end   = rt->a_chains-1;
 	while (start != end)
 	{
-		unsigned int middle = (start + end) / 2;
+		u32 middle = (start + end) / 2;
 		if (bstrncmp(hash, CHASH(middle), rt->hlen) <= 0)
 			end = middle;
 		else
@@ -302,10 +302,10 @@ int RTable_BFind(RTable* rt, char* hash)
 }
 
 // Hash table implementation
-static unsigned int HashFun(const char* str, unsigned int len);
-unsigned int RTable_HFind(RTable* rt, char* str)
+static u32 HashFun(const char* str, u32 len);
+u32 RTable_HFind(RTable* rt, char* str)
 {
-	unsigned int cur = HashFun(str, rt->slen) % rt->a_chains;
+	u32 cur = HashFun(str, rt->slen) % rt->a_chains;
 	while (CACTIVE(cur) && bstrncmp(CHASH(cur), str, rt->slen) != 0)
 		if (++cur >= rt->a_chains)
 			cur = 0;
@@ -316,13 +316,13 @@ char bstrncmp(char* a, char* b, int n)
 {
 	for (int i = 0; i < n; i++, a++, b++)
 		if (*a != *b)
-			return *(unsigned char*)a < *(unsigned char*)b ? -1 : 1;
+			return *(u8*)a < *(u8*)b ? -1 : 1;
 	return 0;
 }
 
-void hex2hash(char* hex, char* hash, unsigned int hlen)
+void hex2hash(char* hex, char* hash, u32 hlen)
 {
-	for (unsigned int i = 0; i < hlen; i++)
+	for (u32 i = 0; i < hlen; i++)
 	{
 		*hash  = *hex - (*hex <= '9' ? '0' : 87);
 		hex++;
@@ -333,15 +333,15 @@ void hex2hash(char* hex, char* hash, unsigned int hlen)
 	}
 }
 
-void printHash(char* hash, unsigned int hlen)
+void printHash(char* hash, u32 hlen)
 {
-	for (unsigned int i = 0; i < hlen; i++, hash++)
-		printf("%.2x", (unsigned char) *hash);
+	for (u32 i = 0; i < hlen; i++, hash++)
+		printf("%.2x", (u8) *hash);
 }
 
-void printString(char* str, unsigned int slen)
+void printString(char* str, u32 slen)
 {
-	for (unsigned int j = 0; j < slen; j++, str++)
+	for (u32 j = 0; j < slen; j++, str++)
 		printf("%c", *str);
 }
 
@@ -363,12 +363,12 @@ void printString(char* str, unsigned int slen)
 *                                                                        *
 **************************************************************************
 */
-static unsigned int HashFun(const char* str, unsigned int len)
+static u32 HashFun(const char* str, u32 len)
 {
-	unsigned int b    = 378551;
-	unsigned int a    = 63689;
-	unsigned int hash = 0;
-	unsigned int i    = 0;
+	u32 b    = 378551;
+	u32 a    = 63689;
+	u32 hash = 0;
+	u32 i    = 0;
 
 	for (i = 0; i < len; str++, i++)
 	{
