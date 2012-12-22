@@ -3,6 +3,9 @@
 
 #include <stdio.h>
 
+typedef unsigned char  u8;
+typedef unsigned long u32;
+
 typedef struct RBNode
 {
 	char           color;
@@ -18,29 +21,40 @@ typedef struct
 {
 	RBNode* root;
 
-	unsigned int hlen;
-	unsigned int slen;
+	u32 hlen;
+	u32 slen;
 	char*        charset;
-	unsigned int clen;
-	unsigned int l_chains;
+	u32 clen;
+	u32 l_chains;
 
 	char* bufstr1;
 	char* bufstr2;
 	char* bufhash;
 } RBTable;
 
-void    RBTable_New      (RBTable* rbt, unsigned int length, char* chars, unsigned int depth);
+// red black tree handling
+void    RBTable_New      (RBTable* rbt, u32 length, const char* chars, u32 depth);
 void    RBTable_Delete   (RBTable* rbt);
 RBNode* RBTable_Find     (RBTable* rbt, const char* hash);
 RBNode* RBTable_FindNew  (RBTable* rbt, const char* hash);
-char    RBTable_AddChain (RBTable* rbt, char* hash, char* str);
-char    RBTable_FindChain(RBTable* rbt);
-void    RBTable_Mask(RBTable* rbt, unsigned int step, char* hash, char* str);
+
+// chain handling
+char RBTable_AddChain (RBTable* rbt, const char* hash, const char* str);
+char RBTable_FindChain(RBTable* rbt);
+char RBTable_Reverse  (RBTable* rbt, const char* hash, char* dst);
+void RBTable_Mask     (RBTable* rbt, u32 step, const char* hash, char* str);
+
+// input / output
+u32  RBTable_FromFile (RBTable* rbt, FILE* f);
+void RBTable_ToFile   (RBTable* rbt, FILE* f);
+u32  RBTable_FromFileN(RBTable* rbt, const char* filename);
+void RBTable_ToFileN  (RBTable* rbt, const char* filename);
 
 // useful functions
-char bstrncmp   (const char* a, const char* b, int n);
-void hex2hash   (char* hex, char* hash, unsigned int hlen);
-void printHash  (char* hash, unsigned int hlen);
-void printString(char* str, unsigned int slen);
+char  bstrncmp   (const char* a, const char* b, int n);
+char* bstrndup   (const char* str, u32 len);
+void  hex2hash   (const char* hex, char* hash, u32 hlen);
+void  printHash  (const char* hash, u32 hlen);
+void  printString(const char* str, u32 slen);
 
 #endif

@@ -31,8 +31,6 @@ static void usage(int argc, char** argv)
 		"                        rtgen n_chains   [file]\n"
 		"                        rtnew n_chains   [dst]\n"
 		"                        rtres            [file]\n"
-		"                        rsize n_chains src [dst]\n"
-		"                        merge src1 [src2 [dst]]\n"
 		"                        tests [n_tests   [src]]\n"
 		"                        crack hash       [src]\n"
 		"\n"
@@ -48,11 +46,8 @@ static void usage(int argc, char** argv)
 		"\n"
 		"mode:"
 		"  rtgen  g  starts/resumes the computation of a rainbow table\n"
-		"  rtnew  n  starts (only) a new table (ignore existing file)\n"
-		"  rtres  r  resumes (only) a table generation (stops if no file)\n"
-		"  merge  m  merges two sorted ('Done') tables\n"
-		"            EXPERIMENTAL\n"
-		"  rsize  s  resizes table to store n_chains (only to a bigger one)\n"
+		"  rtnew  n  same as rtgen, ignore existing file\n"
+		"  rtres  r  same as rtgen, but no limit\n"
 		"  tests  t  runs cracking tests on random strings\n"
 		"  crack  c  tries to reverse a hash\n"
 		,
@@ -86,12 +81,12 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
-	char*        charset  = "0123456789abcdefghijklmnopqrstuvwxyz";
-//	unsigned int clen     = strlen(charset);
+	char* charset  = "0123456789abcdefghijklmnopqrstuvwxyz";
+	u32 clen        = strlen(charset);
 
-	unsigned int slen     = atoi(argv[1]);
-	unsigned int l_chains = atoi(argv[2]);
-	char*        modestr  = argv[3];
+	u32 slen       = atoi(argv[1]);
+	u32 l_chains   = atoi(argv[2]);
+	char* modestr  = argv[3];
 
 	Mode mode;
 	if (!strcmp(modestr, "rtgen") || !strcmp(modestr, "g"))
@@ -111,145 +106,75 @@ int main(int argc, char** argv)
 	else
 		ERROR("Invalid mode '%s'\n", modestr);
 
-//	char* param1 = argc > 4 ? argv[4] : NULL;
-//	char* param2 = argc > 5 ? argv[5] : NULL;
+	char* param1 = argc > 4 ? argv[4] : NULL;
+	char* param2 = argc > 5 ? argv[5] : NULL;
 //	char* param3 = argc > 6 ? argv[6] : NULL;
 
-//	RBTable* rt = NULL;
 	char* str = (char*) malloc(slen);
 	char* tmp = (char*) malloc(slen);
-//	char hash[16];
+	char hash[16];
 	srandom(time(NULL));
 
 	RBTable rbt;
+	RBTable_New(&rbt, slen, charset, l_chains);
 
 	switch (mode)
 	{
 	case RTGEN:
 	case RTNEW:
 	case RTRES:
-/*
 		if (mode == RTRES)
 			param2 = param1;
 		else if (!param1)
 			ERROR("Missing parameter: number of chains to generate\n");
 
 		// load table
+		u32 n_chains = 0;
+		u32 a_chains = mode == RTRES ? 0 : atoi(param1);
 		if (mode != RTNEW)
-			rt = RBTable_FromFileN(slen, charset, l_chains, param2);
-
-		if (!rt)
-		{
-			if (mode == RTRES)
-				ERROR("No table computation to resume\n")
-			else
-				rt = RBTable_New(slen, charset, l_chains, atoi(param1));
-		}
-*/
-
-		RBTable_New(&rbt, slen, charset, l_chains);
+			n_chains += RBTable_FromFileN(&rbt, param2);
 
 		// generate more chains
 		printf("Generating chains\n");
 		signal(SIGINT, stopGenerating);
-//		unsigned int progressStep = rbt.a_chains / 10000;
-//		if (!progressStep) progressStep = 1;
-//		while (generate && rbt.n_chains < rbt.a_chains)
-		while (generate)
+		while (generate && n_chains > a_chains)
 		{
-			RBTable_FindChain(&rbt);
-/*
-			if (rbt.n_chains % progressStep == 0)
+			n_chains += RBTable_FindChain(&rbt);
+			if (n_chains % 1 == 0)
 			{
 				rewriteLine();
-				printf("Progress: %.2f%%", (float) 100 * rbt.n_chains / rbt.a_chains);
+				printf("%lu chains generated", n_chains);
 				fflush(stdout);
 			}
-*/
+			if (mode != RTRES && n_chains >= a_chains)
+				generate = 0;
 		}
 		rewriteLine();
 
-/*
-		// finish generation
-		if (generate)
-		{
-			printf("Sorting table\n");
-			RBTable_Sort(rt);
-			printf("Done\n");
-		}
-		else
-			printf("Pausing table generation (%u chains generated)\n", rbt.n_chains);
-
 		// save table
-		RBTable_ToFileN(rt, param2);
-*/
-		RBTable_Delete(&rbt);
-		break;
-
-/*
-	case MERGE:
-		fprintf(stderr, "WARNING: this feature is experimental\n");
-
-		if (!param1)
-			ERROR("At least the first table must be given in the parameters\n")
-
-		// load tables
-		RBTable* rt1 = RBTable_FromFileN(slen, charset, l_chains, param1);
-		RBTable* rt2 = RBTable_FromFileN(slen, charset, l_chains, param2);
-
-		if (!rt1) ERROR("Could not load first table\n")
-		if (!rt2) ERROR("Could not load second table\n")
-
-		// merge tables
-		rt = RBTable_Merge(rt1, rt2);
-		printf("%u chains after merge\n", rbt.n_chains);
-
-		// free tables
-		RBTable_Delete(rt2);
-		RBTable_Delete(rt1);
-
-		// save merged table
-		RBTable_ToFileN(rt, param3);
-		RBTable_Delete(rt);
-		break;
-
-	case RSIZE:
-		if (!param1) ERROR("The new size and the source table must be provided\n")
-		if (!param2) ERROR("At least the source table must be given in the parameters\n")
-
-		RBTable* src = RBTable_FromFileN(slen, charset, l_chains, param2);
-		RBTable* dst = RBTable_New      (slen, charset, l_chains, atoi(param1));
-
-		if (!src) ERROR("Could no load source table\n")
-
-		RBTable_Transfer(src, dst);
-		printf("%u chains transfered\n", dst->n_chains);
-
-		RBTable_ToFileN(dst, param3);
-		RBTable_Delete(src);
-		RBTable_Delete(dst);
+		printf("Saving to '%s'\n", param2);
+		RBTable_ToFileN(&rbt, param2);
 		break;
 
 	case TESTS:
 		// load table
-		rt = RBTable_FromFileN(slen, charset, l_chains, param2);
-		if (!rt) ERROR("Could no load table\n")
+		RBTable_FromFileN(&rbt, param2);
 
 		printf("Cracking some hashes\n");
 
-		unsigned int count = 0;
-		unsigned int n_tests = param1 ? atoi(param1) : 1000;
-		for (unsigned int i = 0; i < n_tests; i++)
+		u32 count = 0;
+		u32 n_tests = param1 ? atoi(param1) : 1000;
+		for (u32 i = 0; i < n_tests; i++)
 		{
 			// generate random string
-			for (unsigned int j = 0; j < slen; j++)
+			for (u32 j = 0; j < slen; j++)
 				str[j] = charset[random() % clen];
 
 			// hash it
 			MD5((uint8_t*) hash, (uint8_t*) str, slen);
 
 			// crack the hash
-			if (RBTable_Reverse(rt, hash, tmp))
+			if (RBTable_Reverse(&rbt, hash, tmp))
 			{
 				// check the cracked string
 				if (bstrncmp(str, tmp, slen))
@@ -267,24 +192,22 @@ int main(int argc, char** argv)
 			// progression
 			rewriteLine();
 			printString(str, slen);
-			printf("  %i / %i", count, i+1);
+			printf("  %lu / %lu", count, i+1);
 			fflush(stdout);
 		}
 		printf("\n");
 
-		RBTable_Delete(rt);
 		break;
 
 	case CRACK:
 		if (!param1) ERROR("Hash not supplied\n")
 
 		// load table
-		rt = RBTable_FromFileN(slen, charset, l_chains, param2);
-		if (!rt) ERROR("Could no load table\n")
+		RBTable_FromFileN(&rbt, param2);
 
 		// try and crack hash
 		hex2hash(param1, hash, 16);
-		int res = RBTable_Reverse(rt, hash, str);
+		int res = RBTable_Reverse(&rbt, hash, str);
 
 		if (res)
 		{
@@ -295,13 +218,11 @@ int main(int argc, char** argv)
 		}
 		else
 			printf("Could not reverse hash\n");
-
-		RBTable_Delete(rt);
 		break;
-*/
 	default:
 		break;
 	}
+	RBTable_Delete(&rbt);
 
 	free(tmp);
 	free(str);
