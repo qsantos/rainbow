@@ -86,6 +86,18 @@ typedef enum
 
 int main(int argc, char** argv)
 {
+	if (!strcmp(argv[1], "--version") || !strcmp(argv[1], "-v"))
+	{
+		printf("rainbow\n");
+		printf("Compiled on %s at %s\n", __DATE__, __TIME__);
+		exit(0);
+	}
+	else if (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-h"))
+	{
+		usage(argc, argv);
+		exit(0);
+	}
+
 	if (argc < 4)
 	{
 		usage(argc, argv);
