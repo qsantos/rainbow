@@ -266,7 +266,7 @@ char RTable_Reverse(RTable* rt, const char* hash, char* dst)
 
 void RTable_Reduce(RTable* rt, u32 step, const char* hash, char* str)
 {
-	for (u32 j = 0; j < rt->slen; j++, str++, hash++)
+	for (u32 j = 0; j < rt->slen; j++, str++, hash++, step>>=8)
 		*str = rt->charset[(u8)(*hash ^ step) % rt->clen];
 }
 

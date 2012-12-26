@@ -35,6 +35,8 @@ static void usage(int argc, char** argv)
 		"                        merge src1 [src2 [dst]]\n"
 		"                        tests [n_tests   [src]]\n"
 		"                        crack hash       [src]\n"
+		"                        filec clr_f      [file]\n"
+		"                        fileh clr_h      [file]\n"
 		"\n"
 		"PARAMS:\n"
 		"  slen       length of the non-hashed string / key\n"
@@ -45,6 +47,8 @@ static void usage(int argc, char** argv)
 		"  src        file containing a rainbow table (only read)\n"
 		"  dst        file containing a rainbow table (only write)\n"
 		"  file       file containing a rainbow table (both)\n"
+		"  clr_f      file containing clear strings to test\n"
+		"  clr_h      file containing hashes to reverse\n"
 		"\n"
 		"mode:"
 		"  rtgen  g  starts/resumes the computation of a rainbow table\n"
@@ -55,6 +59,8 @@ static void usage(int argc, char** argv)
 		"  rsize  s  resizes table to store n_chains (only to a bigger one)\n"
 		"  tests  t  runs cracking tests on random strings\n"
 		"  crack  c  tries to reverse a hash\n"
+		"  filec  f  perform tests using the clear string from the file\n"
+		"  fileh  h  try and reverse the hashes from the file\n"
 		,
 		argv[0]
 	);
