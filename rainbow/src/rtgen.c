@@ -11,6 +11,13 @@ static inline void rewriteLine(void)
 	printf("\r\33[K");
 }
 
+static char generate = 1;
+static void stopGenerating(int signal)
+{
+	(void) signal;
+	generate = 0;
+}
+
 static void usage(int argc, char** argv)
 {
 	(void) argc;
@@ -29,13 +36,6 @@ static void usage(int argc, char** argv)
 		,
 		argv[0]
 	);
-}
-
-static char generate = 1;
-static void stopGenerating(int signal)
-{
-	(void) signal;
-	generate = 0;
 }
 
 int main(int argc, char** argv)
@@ -96,9 +96,7 @@ int main(int argc, char** argv)
 
 	// finish generation
 	if (generate)
-	{
 		RTable_Sort(&rt);
-	}
 	else
 		printf("Pausing table generation (%lu chains generated)\n", rt.n_chains);
 

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <assert.h>
 
+#include "md5.h"
 #include "rainbow.h"
 
 #define ERROR(...)                    \
@@ -13,23 +14,28 @@
 	exit(1);                      \
 }
 
-static char reverseHash(RTable* rt, u32 n_rt, const char* hashstr, u32 l_string, char* strbuf)
+static char reverseHash(RTable* rt, u32 n_rt, const char* hashstr, u32 l_string, char* bufstr)
 {
 	char hash[16];
 	hex2hash(hashstr, hash, 16);
 	for (u32 i = 0; i < n_rt; i++)
 	{
-		if (RTable_Reverse(&rt[i], hash, strbuf))
+		if (RTable_Reverse(&rt[i], hash, bufstr))
 		{
 			printHash(hash, 16);
 			printf(" ");
-			printString(strbuf, l_string);
+			printString(bufstr, l_string);
 			printf("\n");
 			return 1;
 		}
 	}
 	printf("Could not reverse hash\n");
 	return 0;
+}
+
+static inline void rewriteLine(void)
+{
+	printf("\r\33[K");
 }
 
 static void usage(int argc, char** argv)
@@ -44,10 +50,18 @@ static void usage(int argc, char** argv)
 		"TARGET:\n"
 		" -x, --hash HASH  sets the target to HASH\n"
 		" -f, --file FILE  read the targets from FILE (- for stdin)\n"
+		" -r, --random N   targets are N random string hashes (bench)\n"
 		,
 		argv[0]
 	);
 }
+
+typedef enum
+{
+	T_HASH,
+	T_FILE,
+	T_RAND,
+} Target;
 
 int main(int argc, char** argv)
 {
@@ -69,8 +83,18 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
-	char  fromfile = strcmp(argv[1], "-f") == 0 || strcmp(argv[1], "--file") == 0;
-	char* target   = argv[2];
+	Target ttype;
+	char* tstr = argv[1];
+	if (strcmp(tstr, "-x") == 0 || strcmp(tstr, "--hash") == 0)
+		ttype = T_HASH;
+	else if (strcmp(tstr, "-f") == 0 || strcmp(tstr, "--file") == 0)
+		ttype = T_FILE;
+	else if (strcmp(tstr, "-r") == 0 || strcmp(tstr, "--random") == 0)
+		ttype = T_RAND;
+	else
+		ERROR("Invalid target '%s'\n", tstr);
+
+	char* tparam = argv[2];
 
 	// load tables
 	u32 n_rt = argc-3;
@@ -81,26 +105,54 @@ int main(int argc, char** argv)
 			ERROR("Could no load table '%s'\n", argv[i+3])
 
 	// try and crack hash(es)
-	char n_crack = 0;
-	char* bufstr = (char*) malloc(rt[0].l_string);
-	if (fromfile)
+	u32   n_crack   = 0;
+	u32   l_string  = rt[0].l_string;
+	char* charset   = rt[0].charset;
+	u32   n_charset = rt[0].n_charset;
+	char* bufstr    = (char*) malloc(l_string);
+	switch (ttype)
 	{
-		FILE* f = strcmp(target, "-") == 0 ? stdin : fopen(target, "r");
+	case T_HASH:
+		n_crack += reverseHash(rt, n_rt, tparam, l_string, bufstr);
+		break;
+	case T_FILE:
+		(void) 0;
+		FILE* f = strcmp(tparam, "-") == 0 ? stdin : fopen(tparam, "r");
 		assert(f);
 
-		char hashstr[33];
 		while (1)
 		{
+			char hashstr[33];
 			fread(hashstr, 1, 33, f);
 			if (feof(f))
 				break;
-			n_crack += reverseHash(rt, n_rt, hashstr, rt[0].l_string, bufstr);
+			n_crack += reverseHash(rt, n_rt, hashstr, l_string, bufstr);
 		}
 
 		fclose(f);
+		break;
+	case T_RAND:
+		(void) 0;
+		u32 n = atoi(tparam);
+		for (u32 i = 0; i < n; i++)
+		{
+			for (u32 j = 0; j < l_string; j++)
+				bufstr[j] = charset[random() % n_charset];
+
+			char hash[16];
+			MD5((u8*) hash, (u8*) bufstr, l_string);
+			for (u32 i = 0; i < n_rt; i++)
+				if (RTable_Reverse(&rt[i], hash, bufstr))
+				{
+					n_crack++;
+					break;
+				}
+			rewriteLine();
+			printf("%lu / %lu", n_crack, i+1);
+			fflush(stdout);
+		}
+		printf("\n");
 	}
-	else
-		n_crack += reverseHash(rt, n_rt, target, rt[0].l_string, bufstr);
 	free(bufstr);
 
 	for (u32 i = 0; i < n_rt; i++)
