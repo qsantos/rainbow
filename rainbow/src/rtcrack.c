@@ -9,6 +9,7 @@
 	fprintf(stderr, __VA_ARGS__); \
 	fprintf(stderr, "\n");        \
 	usage(argc, argv);            \
+	RTable_Delete(rt);            \
 	exit(1);                      \
 }
 
@@ -18,12 +19,13 @@ static void usage(int argc, char** argv)
 
 	printf
 	(
-		"Usage: %s l_string l_chains hash src\n"
+		"Usage: %s l_string l_chains n_chains hash src\n"
 		"try and reverse a hash\n"
 		"\n"
 		"PARAMS:\n"
 		"  l_string   length of the non-hashed string / key\n"
 		"  l_chains   length of the chains to generate\n"
+		"  n_chains   the number of chains in the table_n"
 		"  hash       the hash to be reversed\n"
 		"  src        source file\n"
 		,
@@ -45,28 +47,30 @@ int main(int argc, char** argv)
 		exit(0);
 	}
 
-	if (argc < 5)
+	if (argc < 6)
 	{
 		usage(argc, argv);
 		exit(1);
 	}
 
-	char*        charset  = "0123456789abcdefghijklmnopqrstuvwxyz";
-	unsigned int l_string = atoi(argv[1]);
-	unsigned int l_chains = atoi(argv[2]);
-	char*        hashstr  = argv[3];
-	char*        filename = argv[4];
+	char* charset  = "0123456789abcdefghijklmnopqrstuvwxyz";
+	u32   l_string = atoi(argv[1]);
+	u32   l_chains = atoi(argv[2]);
+	u32   n_chains = atoi(argv[3]);
+	char* hashstr  = argv[4];
+	char* filename = argv[5];
 
 	// load table
-	RTable* rt = RTable_FromFile(l_string, charset, l_chains, filename);
-	if (!rt) ERROR("Could no load table\n")
+	RTable* rt = RTable_New(l_string, charset, l_chains, n_chains);
+	if (!RTable_FromFile(rt, filename))
+		ERROR("Could no load table\n")
 
 	// try and crack hash
 	char hash[16];
 	hex2hash(hashstr, hash, 16);
 
 	char* str = (char*) malloc(l_string);
-	int res = RTable_Reverse(rt, hash, str);
+	char res = RTable_Reverse(rt, hash, str);
 
 	if (res)
 	{

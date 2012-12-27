@@ -37,12 +37,12 @@ char    RTable_FindChain(RTable* rt);
 void    RTable_Sort     (RTable* rt);
 
 // loading and storing
-void    RTable_ToFile  (RTable* rt, const char* filename);
-RTable* RTable_FromFile(u32 l_string, const char* charset, u32 l_chains, const char* filename);
+void RTable_ToFile  (RTable* rt, const char* filename);
+char RTable_FromFile(RTable* rt, const char* filename);
 
 // misc
-void    RTable_Print    (RTable* rt);
-char    RTable_Reverse  (RTable* rt, const char* hash, char* dst);
+void RTable_Print    (RTable* rt);
+char RTable_Reverse  (RTable* rt, const char* hash, char* dst);
 
 // internal use
 void RTable_Reduce(RTable* rt, u32 step, const char* hash, char* str); // hash to string reduce function

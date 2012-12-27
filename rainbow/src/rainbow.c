@@ -112,32 +112,12 @@ void RTable_ToFile(RTable* rt, const char* filename)
 	fclose(f);
 }
 
-RTable* RTable_FromFile(u32 l_string, const char* charset, u32 l_chains, const char* filename)
+char RTable_FromFile(RTable* rt, const char* filename)
 {
 	FILE* f = filename ? fopen(filename, "r") : stdin;
 	if (!f)
-		return NULL;
+		return 0;
 
-	if (ftell(f) != 0)
-	{
-		fprintf(stderr, "Nothing to read\n");
-		exit(1);
-	}
-
-	// check for the file size
-	// TODO
-	fseek(f, 0, SEEK_END);
-	u32 size = ftell(f);
-	fseek(f, 0, SEEK_SET);
-	u32 sizeofChain = 1 + 16 + l_string;
-	if (size % sizeofChain != l_string)
-	{
-		fprintf(stderr, "Invalid file\n");
-		exit(1);
-	}
-	u32 a_chains = size / sizeofChain;
-
-	RTable* rt = RTable_New(l_string, charset, l_chains, a_chains);
 	fread(rt->curstr, 1,               rt->l_string, f);
 	fread(rt->chains, rt->sizeofChain, rt->a_chains, f);
 	rt->n_chains = 0;
@@ -147,7 +127,7 @@ RTable* RTable_FromFile(u32 l_string, const char* charset, u32 l_chains, const c
 	printf("%lu chains loaded\n", rt->n_chains);
 
 	fclose(f);
-	return rt;
+	return 1;
 }
 
 void RTable_Print(RTable* rt)

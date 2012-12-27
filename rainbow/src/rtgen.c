@@ -6,14 +6,6 @@
 
 #include "rainbow.h"
 
-#define ERROR(...)                    \
-{                                     \
-	fprintf(stderr, __VA_ARGS__); \
-	fprintf(stderr, "\n");        \
-	usage(argc, argv);            \
-	exit(1);                      \
-}
-
 static inline void rewriteLine(void)
 {
 	printf("\r\33[K");
@@ -65,25 +57,22 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
-	char*        charset  = "0123456789abcdefghijklmnopqrstuvwxyz";
-	unsigned int l_string = atoi(argv[1]);
-	unsigned int l_chains = atoi(argv[2]);
-	unsigned int n_chains = atoi(argv[3]);
-	char*        filename = argv[4];
+	char* charset  = "0123456789abcdefghijklmnopqrstuvwxyz";
+	u32   l_string = atoi(argv[1]);
+	u32   l_chains = atoi(argv[2]);
+	u32   n_chains = atoi(argv[3]);
+	char* filename = argv[4];
 
-	RTable* rt = NULL;
+	RTable* rt = RTable_New(l_string, charset, l_chains, n_chains);
 	srandom(time(NULL));
 
-	// load table
-	rt = RTable_FromFile(l_string, charset, l_chains, filename);
-
-	if (!rt)
-		rt = RTable_New(l_string, charset, l_chains, n_chains);
+	// load table, if exists
+	RTable_FromFile(rt, filename);
 
 	// generate more chains
 	printf("Generating chains\n");
 	signal(SIGINT, stopGenerating);
-	unsigned int progressStep = rt->a_chains / 10000;
+	u32 progressStep = rt->a_chains / 10000;
 	if (!progressStep) progressStep = 1;
 	while (generate && rt->n_chains < rt->a_chains)
 	{
