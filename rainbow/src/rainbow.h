@@ -16,16 +16,16 @@ typedef struct
 	u32   sizeofChain; // memory size of a chain
 	char* chains;      // data (chain array)
 
-	u32   hlen;
-	u32   slen;
-	char* charset;
-	u32   clen;
-	u32   l_chains;
+	u32   hlen;        // hash length
+	u32   slen;        // string length
+	char* charset;     // character set
+	u32   clen;        // character count
+	u32   l_chains;    // chain length
 
-	char* curstr;
-	char* bufstr;
-	char* bufhash;
-	char* bufchain;
+	char* curstr;      // current starting point
+	char* bufstr;      // temporary string
+	char* bufhash;     // temporary hash
+	char* bufchain;    // temporary chain
 } RTable;
 
 // generation
