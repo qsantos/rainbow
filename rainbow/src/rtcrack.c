@@ -58,7 +58,7 @@ int main(int argc, char** argv)
 	char*        filename = argv[4];
 
 	// load table
-	RTable* rt = RTable_FromFileN(l_string, charset, l_chains, filename);
+	RTable* rt = RTable_FromFile(l_string, charset, l_chains, filename);
 	if (!rt) ERROR("Could no load table\n")
 
 	// try and crack hash

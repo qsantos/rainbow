@@ -32,15 +32,12 @@ typedef struct
 RTable* RTable_New      (u32 length, const char* chars, u32 depth, u32 count);
 void    RTable_Delete   (RTable* rt);
 char    RTable_AddChain (RTable* rt, const char* hash, const char* str);
-void    RTable_Transfer (RTable* rt1, RTable* rt2);
 char    RTable_FindChain(RTable* rt);
 void    RTable_Sort     (RTable* rt);
 
 // loading and storing
-void    RTable_ToFile   (RTable* rt, FILE* f);
-RTable* RTable_FromFile (u32 l_string, const char* charset, u32 l_chains, FILE* f);
-void    RTable_ToFileN  (RTable* rt, const char* filename);
-RTable* RTable_FromFileN(u32 l_string, const char* charset, u32 l_chains, const char* filename);
+void    RTable_ToFile  (RTable* rt, const char* filename);
+RTable* RTable_FromFile(u32 l_string, const char* charset, u32 l_chains, const char* filename);
 
 // misc
 void    RTable_Print    (RTable* rt);

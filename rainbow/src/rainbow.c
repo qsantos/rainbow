@@ -77,13 +77,6 @@ char RTable_AddChain(RTable* rt, const char* hash, const char* str)
 	return 0;
 }
 
-void RTable_Transfer(RTable* rt1, RTable* rt2)
-{
-	for (u32 i = 0; i < rt1->a_chains; i++)
-		if (CACTIVE1(i))
-			RTable_AddChain(rt2, CHASH1(i), CSTR1(i));
-}
-
 char RTable_FindChain(RTable* rt)
 {
 	// pick a starting point
@@ -115,27 +108,37 @@ void RTable_Sort(RTable* rt)
 	RTable_QSort(rt, 0, rt->a_chains-1);
 }
 
-void RTable_ToFile(RTable* rt, FILE* f)
+void RTable_ToFile(RTable* rt, const char* filename)
 {
+	FILE* f = filename ? fopen(filename, "w") : stdout;
+	if (!f)
+	{
+		fprintf(stderr, "Could not open '%s'\n", filename);
+		exit(1);
+	}
 	fwrite(rt->curstr, 1,               rt->l_string, f);
 	fwrite(rt->chains, rt->sizeofChain, rt->a_chains, f);
+	fclose(f);
 }
 
-RTable* RTable_FromFile(u32 l_string, const char* charset, u32 l_chains, FILE* f)
+RTable* RTable_FromFile(u32 l_string, const char* charset, u32 l_chains, const char* filename)
 {
+	FILE* f = filename ? fopen(filename, "r") : stdin;
+	if (!f)
+		return NULL;
+
 	if (ftell(f) != 0)
 	{
 		fprintf(stderr, "Nothing to read\n");
 		exit(1);
 	}
 
+	// check for the file size
+	// TODO
 	fseek(f, 0, SEEK_END);
 	u32 size = ftell(f);
 	fseek(f, 0, SEEK_SET);
-
-	// TODO
-	u32 l_hash = 16;
-	u32 sizeofChain = 1 + l_hash + l_string;
+	u32 sizeofChain = 1 + 16 + l_string;
 	if (size % sizeofChain != l_string)
 	{
 		fprintf(stderr, "Invalid file\n");
@@ -151,27 +154,7 @@ RTable* RTable_FromFile(u32 l_string, const char* charset, u32 l_chains, FILE* f
 		if (CACTIVE(i))
 			rt->n_chains++;
 	printf("%u chains loaded\n", rt->n_chains);
-	return rt;
-}
 
-void RTable_ToFileN(RTable* rt, const char* filename)
-{
-	FILE* f = filename ? fopen(filename, "w") : stdout;
-	if (!f)
-	{
-		fprintf(stderr, "Could not open '%s'\n", filename);
-		exit(1);
-	}
-	RTable_ToFile(rt, f);
-	fclose(f);
-}
-
-RTable* RTable_FromFileN(u32 l_string, const char* charset, u32 l_chains, const char* filename)
-{
-	FILE* f = filename ? fopen(filename, "r") : stdin;
-	if (!f)
-		return NULL;
-	RTable* rt = RTable_FromFile(l_string, charset, l_chains, f);
 	fclose(f);
 	return rt;
 }

@@ -75,7 +75,7 @@ int main(int argc, char** argv)
 	srandom(time(NULL));
 
 	// load table
-	rt = RTable_FromFileN(l_string, charset, l_chains, filename);
+	rt = RTable_FromFile(l_string, charset, l_chains, filename);
 
 	if (!rt)
 		rt = RTable_New(l_string, charset, l_chains, n_chains);
@@ -114,7 +114,7 @@ int main(int argc, char** argv)
 		printf("Pausing table generation (%u chains generated)\n", rt->n_chains);
 
 	// save table
-	RTable_ToFileN(rt, filename);
+	RTable_ToFile(rt, filename);
 	RTable_Delete(rt);
 	return 0;
 }
