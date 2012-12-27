@@ -262,19 +262,7 @@ int main(int argc, char** argv)
 
 			// crack the hash
 			if (RTable_Reverse(rt, hash, tmp))
-			{
-				// check the cracked string
-				if (bstrncmp(str, tmp, slen))
-				{
-					rewriteLine();
-					printString(str, slen);
-					printf(" != ");
-					printString(tmp, 16);
-					printf("\n");
-					exit(1);
-				}
 				count++;
-			}
 
 			// progression
 			rewriteLine();

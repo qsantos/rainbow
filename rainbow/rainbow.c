@@ -248,13 +248,12 @@ char RTable_Reverse(RTable* rt, const char* hash, char* dst)
 		// get the previous string
 		memcpy(rt->bufstr, CSTR(res), rt->slen);
 		MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr, rt->slen);
-		u32 step = 1;
-		while (step < rt->l_chains && bstrncmp(rt->bufhash, hash, rt->hlen) != 0)
+		for (u32 step = 1; step < firstStep; step++)
 		{
-			RTable_Reduce(rt, step++, rt->bufhash, rt->bufstr);
+			RTable_Reduce(rt, step, rt->bufhash, rt->bufstr);
 			MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr, rt->slen);
 		}
-		if (step < rt->l_chains)
+		if (bstrncmp(rt->bufhash, hash, rt->hlen) == 0)
 		{
 			if (dst)
 				memcpy(dst, rt->bufstr, rt->slen);
