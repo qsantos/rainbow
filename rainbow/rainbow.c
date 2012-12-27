@@ -176,46 +176,6 @@ RTable* RTable_FromFileN(u32 slen, const char* charset, u32 l_chains, const char
 	return rt;
 }
 
-RTable* RTable_Merge(RTable* rt1, RTable* rt2)
-{
-	assert(rt1->hlen == rt2->hlen);
-	assert(rt1->slen == rt2->slen);
-	assert(rt1->clen == rt2->clen);
-	assert(rt1->l_chains == rt2->l_chains);
-
-	assert(rt1->a_chains == rt1->n_chains);
-	assert(rt2->a_chains == rt2->n_chains);
-
-	RTable* rt = RTable_New(rt1->slen, rt1->charset, rt1->l_chains, rt1->a_chains + rt2->a_chains);
-	u32 i1 = 0;
-	u32 i2 = 0;
-	u32 i  = 0;
-	while (i1 < rt1->a_chains || i2 < rt2->a_chains)
-	{
-		int c = bstrncmp(CHASH1(i1), CHASH2(i2), rt1->hlen);
-		if (c < 0)
-		{
-			memcpy(rt->chains + i*rt->sizeofChain, rt1->chains + i1*rt1->sizeofChain, rt->sizeofChain);
-			i1++;
-		}
-		else if (c > 0)
-		{
-			memcpy(rt->chains + i*rt->sizeofChain, rt2->chains + i1*rt2->sizeofChain, rt->sizeofChain);
-			i2++;
-		}
-		else
-		{
-			memcpy(rt->chains + i*rt->sizeofChain, rt1->chains + i1*rt1->sizeofChain, rt->sizeofChain);
-			i1++;
-			i2++;
-		}
-		i++;
-	}
-	rt->n_chains = i;
-	rt->a_chains = i; // reduce the matrix which will be stored
-	return rt;
-}
-
 void RTable_Print(RTable* rt)
 {
 	for (u32 i = 0; i < rt->a_chains; i++)

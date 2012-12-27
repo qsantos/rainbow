@@ -43,7 +43,6 @@ void    RTable_ToFileN  (RTable* rt, const char* filename);
 RTable* RTable_FromFileN(u32 slen, const char* charset, u32 l_chains, const char* filename);
 
 // misc
-RTable* RTable_Merge    (RTable* rt1, RTable* rt2);
 void    RTable_Print    (RTable* rt);
 char    RTable_Reverse  (RTable* rt, const char* hash, char* dst);
 
