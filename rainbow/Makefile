@@ -1,21 +1,23 @@
+CC      = gcc
 CFLAGS  = -Wall -Wextra -Werror -pedantic -std=c99 -O3 -D_XOPEN_SOURCE=600
 LDFLAGS = -O3
-TARGET  = rainbow
-SRC     = main.c md5.c rainbow.c
-OBJ     = $(SRC:.c=.o)
+TARGETS = rtgen rtcrack
 
-all: $(TARGET)
+all: $(TARGETS)
 
-$(TARGET): $(OBJ)
-	gcc $(LDFLAGS) $^ -o $@
+rtgen: rtgen.o md5.o rainbow.o
+	$(CC) $(LDFLAGS) $^ -o $@
+
+rtcrack: rtcrack.o md5.o rainbow.o
+	$(CC) $(LDFLAGS) $^ -o $@
 
 %.o: %.c
-	gcc $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f *.o
 
 destroy: clean
-	rm -f $(TARGET)
+	rm -f $(TARGETS)
 
 rebuild: destroy all
