@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 // a chain is made of a status byte, a hash and a string
-// the length of a chain is therefore 1+hlen+slen (sizeofChain)
+// the length of a chain is therefore 1+l_hash+l_string (sizeofChain)
 
 typedef unsigned char u8;
 typedef unsigned int  u32;
@@ -16,10 +16,10 @@ typedef struct
 	u32   sizeofChain; // memory size of a chain
 	char* chains;      // data (chain array)
 
-	u32   hlen;        // hash length
-	u32   slen;        // string length
+	u32   l_hash;      // hash length
+	u32   l_string;    // string length
 	char* charset;     // character set
-	u32   clen;        // character count
+	u32   n_charset;   // character count
 	u32   l_chains;    // chain length
 
 	char* curstr;      // current starting point
@@ -38,9 +38,9 @@ void    RTable_Sort     (RTable* rt);
 
 // loading and storing
 void    RTable_ToFile   (RTable* rt, FILE* f);
-RTable* RTable_FromFile (u32 slen, const char* charset, u32 l_chains, FILE* f);
+RTable* RTable_FromFile (u32 l_string, const char* charset, u32 l_chains, FILE* f);
 void    RTable_ToFileN  (RTable* rt, const char* filename);
-RTable* RTable_FromFileN(u32 slen, const char* charset, u32 l_chains, const char* filename);
+RTable* RTable_FromFileN(u32 l_string, const char* charset, u32 l_chains, const char* filename);
 
 // misc
 void    RTable_Print    (RTable* rt);
@@ -54,8 +54,8 @@ u32  RTable_HFind (RTable* rt, const char* str);                       // hash t
 
 // useful functions
 char bstrncmp   (const char* a, const char* b, int n);
-void hex2hash   (const char* hex, char* hash, u32 hlen);
-void printHash  (const char* hash, u32 hlen);
-void printString(const char* str, u32 slen);
+void hex2hash   (const char* hex, char* hash, u32 l_hash);
+void printHash  (const char* hash, u32 l_hash);
+void printString(const char* str, u32 l_string);
 
 #endif

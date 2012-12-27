@@ -22,11 +22,11 @@ static void usage(int argc, char** argv)
 
 	printf
 	(
-		"Usage: %s slen l_chains n_chains src [dst]\n"
+		"Usage: %s l_string l_chains n_chains src [dst]\n"
 		"resize table to store n_chains\n"
 		"\n"
 		"PARAMS:\n"
-		"  slen       length of the non-hashed string / key\n"
+		"  l_string       length of the non-hashed string / key\n"
 		"  l_chains   length of the chains to generate\n"
 		"  n_chains   the number of chains to be generated\n"
 		"  src        file containing a rainbow table (only read)\n"
@@ -57,11 +57,11 @@ int main(int argc, char** argv)
 	}
 
 	char*        charset  = "0123456789abcdefghijklmnopqrstuvwxyz";
-	unsigned int slen     = atoi(argv[1]);
+	unsigned int l_string     = atoi(argv[1]);
 	unsigned int l_chains = atoi(argv[2]);
 
-	RTable* src = RTable_FromFileN(slen, charset, l_chains, param2);
-	RTable* dst = RTable_New      (slen, charset, l_chains, atoi(param1));
+	RTable* src = RTable_FromFileN(l_string, charset, l_chains, param2);
+	RTable* dst = RTable_New      (l_string, charset, l_chains, atoi(param1));
 
 	if (!src) ERROR("Could no load source table\n")
 

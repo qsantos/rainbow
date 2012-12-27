@@ -16,9 +16,9 @@
 #define  CHASH1(I) (rt1->chains + (I)*rt1->sizeofChain + 1)
 #define  CHASH2(I) (rt2->chains + (I)*rt2->sizeofChain + 1)
 
-#define    CSTR(I) (rt->chains  + (I)*rt->sizeofChain  + 1 + rt->hlen)
-#define   CSTR1(I) (rt1->chains + (I)*rt1->sizeofChain + 1 + rt1->hlen)
-#define   CSTR2(I) (rt2->chains + (I)*rt2->sizeofChain + 1 + rt2->hlen)
+#define    CSTR(I) (rt->chains  + (I)*rt->sizeofChain  + 1 + rt->l_hash)
+#define   CSTR1(I) (rt1->chains + (I)*rt1->sizeofChain + 1 + rt1->l_hash)
+#define   CSTR2(I) (rt2->chains + (I)*rt2->sizeofChain + 1 + rt2->l_hash)
 
 RTable* RTable_New(u32 length, const char* chars, u32 depth, u32 count)
 {
@@ -26,19 +26,19 @@ RTable* RTable_New(u32 length, const char* chars, u32 depth, u32 count)
 
 	rt->n_chains = 0;
 
-	rt->hlen = 16;
-	rt->slen = length;
-	rt->sizeofChain = 1 + rt->hlen + rt->slen;
+	rt->l_hash = 16;
+	rt->l_string = length;
+	rt->sizeofChain = 1 + rt->l_hash + rt->l_string;
 
-	rt->charset  = strdup(chars);
-	rt->clen     = strlen(chars);
-	rt->l_chains = depth;
-	rt->a_chains = count;
+	rt->charset   = strdup(chars);
+	rt->n_charset = strlen(chars);
+	rt->l_chains  = depth;
+	rt->a_chains  = count;
 
 	rt->chains   = (char*) malloc(rt->sizeofChain * rt->a_chains);
-	rt->curstr   = (char*) malloc(rt->slen);
-	rt->bufstr   = (char*) malloc(rt->slen);
-	rt->bufhash  = (char*) malloc(rt->hlen);
+	rt->curstr   = (char*) malloc(rt->l_string);
+	rt->bufstr   = (char*) malloc(rt->l_string);
+	rt->bufhash  = (char*) malloc(rt->l_hash);
 	rt->bufchain = (char*) malloc(rt->sizeofChain);
 
 	assert(rt->chains);
@@ -48,7 +48,7 @@ RTable* RTable_New(u32 length, const char* chars, u32 depth, u32 count)
 	assert(rt->bufchain);
 
 	memset(rt->chains, 0,              rt->sizeofChain * rt->a_chains);
-	memset(rt->curstr, rt->charset[0], rt->slen);
+	memset(rt->curstr, rt->charset[0], rt->l_string);
 
 	return rt;
 }
@@ -69,8 +69,8 @@ char RTable_AddChain(RTable* rt, const char* hash, const char* str)
 	if (!CACTIVE(htid))
 	{
 		CACTIVE(htid) = 1;
-		memcpy(CHASH(htid), hash, rt->hlen);
-		memcpy(CSTR (htid), str,  rt->slen);
+		memcpy(CHASH(htid), hash, rt->l_hash);
+		memcpy(CSTR (htid), str,  rt->l_string);
 		rt->n_chains++;
 		return 1;
 	}
@@ -100,11 +100,11 @@ char RTable_FindChain(RTable* rt)
 		return -1;
 
 	// start a new chain from 'str'
-	MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->curstr, rt->slen);
+	MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->curstr, rt->l_string);
 	for (u32 step = 1; step < rt->l_chains; step++)
 	{
 		RTable_Reduce(rt, step, rt->bufhash, rt->bufstr);
-		MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr, rt->slen);
+		MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr, rt->l_string);
 	}
 
 	return RTable_AddChain(rt, rt->bufhash, rt->curstr);
@@ -117,11 +117,11 @@ void RTable_Sort(RTable* rt)
 
 void RTable_ToFile(RTable* rt, FILE* f)
 {
-	fwrite(rt->curstr, 1,               rt->slen,     f);
+	fwrite(rt->curstr, 1,               rt->l_string, f);
 	fwrite(rt->chains, rt->sizeofChain, rt->a_chains, f);
 }
 
-RTable* RTable_FromFile(u32 slen, const char* charset, u32 l_chains, FILE* f)
+RTable* RTable_FromFile(u32 l_string, const char* charset, u32 l_chains, FILE* f)
 {
 	if (ftell(f) != 0)
 	{
@@ -134,17 +134,17 @@ RTable* RTable_FromFile(u32 slen, const char* charset, u32 l_chains, FILE* f)
 	fseek(f, 0, SEEK_SET);
 
 	// TODO
-	u32 hlen = 16;
-	u32 sizeofChain = 1 + hlen + slen;
-	if (size % sizeofChain != slen)
+	u32 l_hash = 16;
+	u32 sizeofChain = 1 + l_hash + l_string;
+	if (size % sizeofChain != l_string)
 	{
 		fprintf(stderr, "Invalid file\n");
 		exit(1);
 	}
 	u32 a_chains = size / sizeofChain;
 
-	RTable* rt = RTable_New(slen, charset, l_chains, a_chains);
-	fread(rt->curstr, 1,               rt->slen,     f);
+	RTable* rt = RTable_New(l_string, charset, l_chains, a_chains);
+	fread(rt->curstr, 1,               rt->l_string, f);
 	fread(rt->chains, rt->sizeofChain, rt->a_chains, f);
 	rt->n_chains = 0;
 	for (u32 i = 0; i < rt->a_chains; i++)
@@ -166,12 +166,12 @@ void RTable_ToFileN(RTable* rt, const char* filename)
 	fclose(f);
 }
 
-RTable* RTable_FromFileN(u32 slen, const char* charset, u32 l_chains, const char* filename)
+RTable* RTable_FromFileN(u32 l_string, const char* charset, u32 l_chains, const char* filename)
 {
 	FILE* f = filename ? fopen(filename, "r") : stdin;
 	if (!f)
 		return NULL;
-	RTable* rt = RTable_FromFile(slen, charset, l_chains, f);
+	RTable* rt = RTable_FromFile(l_string, charset, l_chains, f);
 	fclose(f);
 	return rt;
 }
@@ -180,9 +180,9 @@ void RTable_Print(RTable* rt)
 {
 	for (u32 i = 0; i < rt->a_chains; i++)
 	{
-		printHash(CHASH(i), rt->hlen);
+		printHash(CHASH(i), rt->l_hash);
 		printf(" ");
-		printString(CSTR(i), rt->slen);
+		printString(CSTR(i), rt->l_string);
 		printf("\n");
 	}
 }
@@ -193,11 +193,11 @@ char RTable_Reverse(RTable* rt, const char* hash, char* dst)
 	for (u32 firstStep = rt->l_chains; firstStep >= 1; firstStep--)
 	{
 		// get the end point hash
-		memcpy(rt->bufhash, hash, rt->hlen);
+		memcpy(rt->bufhash, hash, rt->l_hash);
 		for (u32 step = firstStep; step < rt->l_chains; step++)
 		{
 			RTable_Reduce(rt, step, rt->bufhash, rt->bufstr);
-			MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr, rt->slen);
+			MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr, rt->l_string);
 		}
 
 		// find the hash's chain
@@ -206,19 +206,19 @@ char RTable_Reverse(RTable* rt, const char* hash, char* dst)
 			continue;
 
 		// get the previous string
-		memcpy(rt->bufstr, CSTR(res), rt->slen);
-		MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr, rt->slen);
+		memcpy(rt->bufstr, CSTR(res), rt->l_string);
+		MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr, rt->l_string);
 		for (u32 step = 1; step < firstStep; step++)
 		{
 			RTable_Reduce(rt, step, rt->bufhash, rt->bufstr);
-			MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr, rt->slen);
+			MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr, rt->l_string);
 		}
 
 		// check for its hash
-		if (bstrncmp(rt->bufhash, hash, rt->hlen) == 0)
+		if (bstrncmp(rt->bufhash, hash, rt->l_hash) == 0)
 		{
 			if (dst)
-				memcpy(dst, rt->bufstr, rt->slen);
+				memcpy(dst, rt->bufstr, rt->l_string);
 			return 1;
 		}
 	}
@@ -227,8 +227,8 @@ char RTable_Reverse(RTable* rt, const char* hash, char* dst)
 
 void RTable_Reduce(RTable* rt, u32 step, const char* hash, char* str)
 {
-	for (u32 j = 0; j < rt->slen; j++, str++, hash++, step>>=8)
-		*str = rt->charset[(u8)(*hash ^ step) % rt->clen];
+	for (u32 j = 0; j < rt->l_string; j++, str++, hash++, step>>=8)
+		*str = rt->charset[(u8)(*hash ^ step) % rt->n_charset];
 }
 
 static void swap(RTable* rt, u32 a, u32 b)
@@ -246,7 +246,7 @@ void RTable_QSort(RTable* rt, u32 left, u32 right)
 	char* pivotValue = CHASH(right);
 	u32 storeIndex = left;
 	for (u32 i = left; i < right; i++)
-		if (bstrncmp(CHASH(i), pivotValue, rt->hlen) < 0)
+		if (bstrncmp(CHASH(i), pivotValue, rt->l_hash) < 0)
 			swap(rt, i, storeIndex++);
 
 	swap(rt, storeIndex, right);
@@ -263,12 +263,12 @@ int RTable_BFind(RTable* rt, const char* hash)
 	while (start != end)
 	{
 		u32 middle = (start + end) / 2;
-		if (bstrncmp(hash, CHASH(middle), rt->hlen) <= 0)
+		if (bstrncmp(hash, CHASH(middle), rt->l_hash) <= 0)
 			end = middle;
 		else
 			start = middle + 1;
 	}
-	if (bstrncmp(CHASH(start), hash, rt->hlen) == 0)
+	if (bstrncmp(CHASH(start), hash, rt->l_hash) == 0)
 		return start;
 	else
 		return -1;
@@ -278,8 +278,8 @@ int RTable_BFind(RTable* rt, const char* hash)
 static u32 HashFun(const char* str, u32 len);
 u32 RTable_HFind(RTable* rt, const char* str)
 {
-	u32 cur = HashFun(str, rt->slen) % rt->a_chains;
-	while (CACTIVE(cur) && bstrncmp(CHASH(cur), str, rt->slen) != 0)
+	u32 cur = HashFun(str, rt->l_string) % rt->a_chains;
+	while (CACTIVE(cur) && bstrncmp(CHASH(cur), str, rt->l_string) != 0)
 		if (++cur >= rt->a_chains)
 			cur = 0;
 	return cur;
@@ -293,9 +293,9 @@ char bstrncmp(const char* a, const char* b, int n)
 	return 0;
 }
 
-void hex2hash(const char* hex, char* hash, u32 hlen)
+void hex2hash(const char* hex, char* hash, u32 l_hash)
 {
-	for (u32 i = 0; i < hlen; i++)
+	for (u32 i = 0; i < l_hash; i++)
 	{
 		*hash  = *hex - (*hex <= '9' ? '0' : 87);
 		hex++;
@@ -306,15 +306,15 @@ void hex2hash(const char* hex, char* hash, u32 hlen)
 	}
 }
 
-void printHash(const char* hash, u32 hlen)
+void printHash(const char* hash, u32 l_hash)
 {
-	for (u32 i = 0; i < hlen; i++, hash++)
+	for (u32 i = 0; i < l_hash; i++, hash++)
 		printf("%.2x", (u8) *hash);
 }
 
-void printString(const char* str, u32 slen)
+void printString(const char* str, u32 l_string)
 {
-	for (u32 j = 0; j < slen; j++, str++)
+	for (u32 j = 0; j < l_string; j++, str++)
 		printf("%c", *str);
 }
 

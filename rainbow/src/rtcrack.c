@@ -18,11 +18,11 @@ static void usage(int argc, char** argv)
 
 	printf
 	(
-		"Usage: %s slen l_chains hash src\n"
+		"Usage: %s l_string l_chains hash src\n"
 		"try and reverse a hash\n"
 		"\n"
 		"PARAMS:\n"
-		"  slen       length of the non-hashed string / key\n"
+		"  l_string   length of the non-hashed string / key\n"
 		"  l_chains   length of the chains to generate\n"
 		"  hash       the hash to be reversed\n"
 		"  src        source file\n"
@@ -52,27 +52,27 @@ int main(int argc, char** argv)
 	}
 
 	char*        charset  = "0123456789abcdefghijklmnopqrstuvwxyz";
-	unsigned int slen     = atoi(argv[1]);
+	unsigned int l_string = atoi(argv[1]);
 	unsigned int l_chains = atoi(argv[2]);
 	char*        hashstr  = argv[3];
 	char*        filename = argv[4];
 
 	// load table
-	RTable* rt = RTable_FromFileN(slen, charset, l_chains, filename);
+	RTable* rt = RTable_FromFileN(l_string, charset, l_chains, filename);
 	if (!rt) ERROR("Could no load table\n")
 
 	// try and crack hash
 	char hash[16];
 	hex2hash(hashstr, hash, 16);
 
-	char* str = (char*) malloc(slen);
+	char* str = (char*) malloc(l_string);
 	int res = RTable_Reverse(rt, hash, str);
 
 	if (res)
 	{
 		printHash(hash, 16);
 		printf(" ");
-		printString(str, slen);
+		printString(str, l_string);
 		printf("\n");
 		free(str);
 		RTable_Delete(rt);

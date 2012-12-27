@@ -25,11 +25,11 @@ static void usage(int argc, char** argv)
 
 	printf
 	(
-		"Usage: %s slen l_chains n_chains dst\n"
+		"Usage: %s l_string l_chains n_chains dst\n"
 		"create a new Rainbow Table in dst\n"
 		"\n"
 		"PARAMS:\n"
-		"  slen       length of the non-hashed string / key\n"
+		"  l_string   length of the non-hashed string / key\n"
 		"  l_chains   length of the chains to generate\n"
 		"  n_chains   the number of chains to be generated\n"
 		"  dst        destination file\n"
@@ -66,7 +66,7 @@ int main(int argc, char** argv)
 	}
 
 	char*        charset  = "0123456789abcdefghijklmnopqrstuvwxyz";
-	unsigned int slen     = atoi(argv[1]);
+	unsigned int l_string = atoi(argv[1]);
 	unsigned int l_chains = atoi(argv[2]);
 	unsigned int n_chains = atoi(argv[3]);
 	char*        filename = argv[4];
@@ -75,10 +75,10 @@ int main(int argc, char** argv)
 	srandom(time(NULL));
 
 	// load table
-	rt = RTable_FromFileN(slen, charset, l_chains, filename);
+	rt = RTable_FromFileN(l_string, charset, l_chains, filename);
 
 	if (!rt)
-		rt = RTable_New(slen, charset, l_chains, n_chains);
+		rt = RTable_New(l_string, charset, l_chains, n_chains);
 
 	// generate more chains
 	printf("Generating chains\n");
