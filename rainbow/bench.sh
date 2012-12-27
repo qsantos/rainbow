@@ -15,7 +15,7 @@ for i in $(seq $n_tests)
 do
 	string=$(dd if=/dev/urandom 2> /dev/null | tr -cd "[:digit:][:lower:]" | head -c $slen)
 	hash=$(echo -n $string | md5sum | cut -d' ' -f1)
-	if ./rtcrack $slen $l_chains $hash $filename 2>&1 > /dev/null
+	if bin/rtcrack $slen $l_chains $hash $filename 2>&1 > /dev/null
 	then
 		C=$(($C+1))
 	fi
