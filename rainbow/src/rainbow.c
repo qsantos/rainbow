@@ -7,18 +7,9 @@
 #include "md5.h"
 
 // chain parameters access
-// TODO : might be a simpler way...
 #define  CACTIVE(I) (rt->chains  [ (I)*rt->sizeofChain  ] )
-#define CACTIVE1(I) (rt1->chains [ (I)*rt1->sizeofChain ] )
-#define CACTIVE2(I) (rt2->chains [ (I)*rt2->sizeofChain ] )
-
-#define   CHASH(I) (rt->chains  + (I)*rt->sizeofChain  + 1)
-#define  CHASH1(I) (rt1->chains + (I)*rt1->sizeofChain + 1)
-#define  CHASH2(I) (rt2->chains + (I)*rt2->sizeofChain + 1)
-
-#define    CSTR(I) (rt->chains  + (I)*rt->sizeofChain  + 1 + rt->l_hash)
-#define   CSTR1(I) (rt1->chains + (I)*rt1->sizeofChain + 1 + rt1->l_hash)
-#define   CSTR2(I) (rt2->chains + (I)*rt2->sizeofChain + 1 + rt2->l_hash)
+#define    CHASH(I) (rt->chains  + (I)*rt->sizeofChain  + 1)
+#define     CSTR(I) (rt->chains  + (I)*rt->sizeofChain  + 1 + rt->l_hash)
 
 RTable* RTable_New(u32 length, const char* chars, u32 depth, u32 count)
 {
