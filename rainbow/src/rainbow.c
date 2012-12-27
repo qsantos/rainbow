@@ -147,7 +147,6 @@ char RTable_FromFile(RTable* rt, const char* filename)
 	for (u32 i = 0; i < rt->a_chains; i++)
 		if (CACTIVE(i))
 			rt->n_chains++;
-	printf("%lu chains loaded\n", rt->n_chains);
 
 	fclose(f);
 	return 1;

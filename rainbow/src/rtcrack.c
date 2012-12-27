@@ -92,9 +92,9 @@ int main(int argc, char** argv)
 		while (1)
 		{
 			fread(hashstr, 1, 33, f);
-			n_crack += reverseHash(rt, n_rt, hashstr, rt[0].l_string, bufstr);
 			if (feof(f))
 				break;
+			n_crack += reverseHash(rt, n_rt, hashstr, rt[0].l_string, bufstr);
 		}
 
 		fclose(f);
