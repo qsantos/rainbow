@@ -7,7 +7,8 @@
 // the length of a chain is therefore 1+l_hash+l_string (sizeofChain)
 
 typedef unsigned char u8;
-typedef unsigned int  u32;
+typedef unsigned long u32;
+typedef signed   long s32;
 
 typedef struct
 {
@@ -46,11 +47,11 @@ char    RTable_Reverse  (RTable* rt, const char* hash, char* dst);
 // internal use
 void RTable_Reduce(RTable* rt, u32 step, const char* hash, char* str); // hash to string reduce function
 void RTable_QSort (RTable* rt, u32 left, u32 right);                   // quick sort
-int  RTable_BFind (RTable* rt, const char* hash);                      // binary search
+s32  RTable_BFind (RTable* rt, const char* hash);                      // binary search
 u32  RTable_HFind (RTable* rt, const char* str);                       // hash table search
 
 // useful functions
-char bstrncmp   (const char* a, const char* b, int n);
+char bstrncmp   (const char* a, const char* b, u32 n);
 void hex2hash   (const char* hex, char* hash, u32 l_hash);
 void printHash  (const char* hash, u32 l_hash);
 void printString(const char* str, u32 l_string);

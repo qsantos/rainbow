@@ -111,7 +111,7 @@ int main(int argc, char** argv)
 		printf("Done\n");
 	}
 	else
-		printf("Pausing table generation (%u chains generated)\n", rt->n_chains);
+		printf("Pausing table generation (%lu chains generated)\n", rt->n_chains);
 
 	// save table
 	RTable_ToFile(rt, filename);

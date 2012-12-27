@@ -84,11 +84,11 @@ char RTable_FindChain(RTable* rt)
 		return -1;
 
 	// start a new chain from 'str'
-	MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->curstr, rt->l_string);
+	MD5((u8*) rt->bufhash, (u8*) rt->curstr, rt->l_string);
 	for (u32 step = 1; step < rt->l_chains; step++)
 	{
 		RTable_Reduce(rt, step, rt->bufhash, rt->bufstr);
-		MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr, rt->l_string);
+		MD5((u8*) rt->bufhash, (u8*) rt->bufstr, rt->l_string);
 	}
 
 	return RTable_AddChain(rt, rt->bufhash, rt->curstr);
@@ -144,7 +144,7 @@ RTable* RTable_FromFile(u32 l_string, const char* charset, u32 l_chains, const c
 	for (u32 i = 0; i < rt->a_chains; i++)
 		if (CACTIVE(i))
 			rt->n_chains++;
-	printf("%u chains loaded\n", rt->n_chains);
+	printf("%lu chains loaded\n", rt->n_chains);
 
 	fclose(f);
 	return rt;
@@ -171,21 +171,21 @@ char RTable_Reverse(RTable* rt, const char* hash, char* dst)
 		for (u32 step = firstStep; step < rt->l_chains; step++)
 		{
 			RTable_Reduce(rt, step, rt->bufhash, rt->bufstr);
-			MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr, rt->l_string);
+			MD5((u8*) rt->bufhash, (u8*) rt->bufstr, rt->l_string);
 		}
 
 		// find the hash's chain
-		int res = RTable_BFind(rt, rt->bufhash);
+		s32 res = RTable_BFind(rt, rt->bufhash);
 		if (res < 0)
 			continue;
 
 		// get the previous string
 		memcpy(rt->bufstr, CSTR(res), rt->l_string);
-		MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr, rt->l_string);
+		MD5((u8*) rt->bufhash, (u8*) rt->bufstr, rt->l_string);
 		for (u32 step = 1; step < firstStep; step++)
 		{
 			RTable_Reduce(rt, step, rt->bufhash, rt->bufstr);
-			MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr, rt->l_string);
+			MD5((u8*) rt->bufhash, (u8*) rt->bufstr, rt->l_string);
 		}
 
 		// check for its hash
@@ -230,7 +230,7 @@ void RTable_QSort(RTable* rt, u32 left, u32 right)
 	RTable_QSort(rt, storeIndex+1, right);
 }
 
-int RTable_BFind(RTable* rt, const char* hash)
+s32 RTable_BFind(RTable* rt, const char* hash)
 {
 	u32 start = 0;
 	u32 end   = rt->a_chains-1;
@@ -259,9 +259,9 @@ u32 RTable_HFind(RTable* rt, const char* str)
 	return cur;
 }
 
-char bstrncmp(const char* a, const char* b, int n)
+char bstrncmp(const char* a, const char* b, u32 n)
 {
-	for (int i = 0; i < n; i++, a++, b++)
+	for (u32 i = 0; i < n; i++, a++, b++)
 		if (*a != *b)
 			return *(u8*)a < *(u8*)b ? -1 : 1;
 	return 0;
