@@ -1,8 +1,6 @@
 #ifndef RAINBOW_H
 #define RAINBOW_H
 
-#include <stdio.h>
-
 // a chain is made of a status byte, a hash and a string
 // the length of a chain is therefore 1+l_hash+l_string (sizeofChain)
 
@@ -30,7 +28,7 @@ typedef struct
 } RTable;
 
 // generation
-void RTable_New      (RTable* rt, u32 length, const char* chars, u32 depth, u32 count);
+void RTable_New      (RTable* rt, u32 l_string, const char* charset, u32 l_chains, u32 a_chains);
 void RTable_Delete   (RTable* rt);
 char RTable_AddChain (RTable* rt, const char* hash, const char* str);
 char RTable_FindChain(RTable* rt);

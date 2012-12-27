@@ -1,6 +1,7 @@
 #include "rainbow.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
@@ -11,18 +12,18 @@
 #define    CHASH(I) (rt->chains  + (I)*rt->sizeofChain  + 1)
 #define     CSTR(I) (rt->chains  + (I)*rt->sizeofChain  + 1 + rt->l_hash)
 
-void RTable_New(RTable* rt, u32 length, const char* chars, u32 depth, u32 count)
+void RTable_New(RTable* rt, u32 l_string, const char* charset, u32 l_chains, u32 a_chains)
 {
 	rt->n_chains = 0;
 
 	rt->l_hash = 16;
-	rt->l_string = length;
+	rt->l_string = l_string;
 	rt->sizeofChain = 1 + rt->l_hash + rt->l_string;
 
-	rt->charset   = strdup(chars);
-	rt->n_charset = strlen(chars);
-	rt->l_chains  = depth;
-	rt->a_chains  = count;
+	rt->charset   = strdup(charset);
+	rt->n_charset = strlen(charset);
+	rt->l_chains  = l_chains;
+	rt->a_chains  = a_chains;
 
 	rt->chains   = (char*) malloc(rt->sizeofChain * rt->a_chains);
 	rt->curstr   = (char*) malloc(rt->l_string);
