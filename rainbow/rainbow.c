@@ -253,6 +253,8 @@ char RTable_Reverse(RTable* rt, const char* hash, char* dst)
 			RTable_Reduce(rt, step, rt->bufhash, rt->bufstr);
 			MD5((uint8_t*) rt->bufhash, (uint8_t*) rt->bufstr, rt->slen);
 		}
+
+		// check for its hash
 		if (bstrncmp(rt->bufhash, hash, rt->hlen) == 0)
 		{
 			if (dst)
