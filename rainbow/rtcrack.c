@@ -19,7 +19,6 @@ static void usage(int argc, char** argv)
 	printf
 	(
 		"Usage: %s slen l_chains hash src\n"
-		"\n"
 		"try and reverse a hash\n"
 		"\n"
 		"PARAMS:\n"
@@ -34,19 +33,19 @@ static void usage(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
-	if (!strcmp(argv[1], "--version") || !strcmp(argv[1], "-v"))
+	if (argc == 1 || !strcmp(argv[1], "--help") || !strcmp(argv[1], "-h"))
+	{
+		usage(argc, argv);
+		exit(0);
+	}
+	else if (!strcmp(argv[1], "--version") || !strcmp(argv[1], "-v"))
 	{
 		printf("rtcrack\n");
 		printf("Compiled on %s at %s\n", __DATE__, __TIME__);
 		exit(0);
 	}
-	else if (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-h"))
-	{
-		usage(argc, argv);
-		exit(0);
-	}
 
-	if (argc < 4)
+	if (argc < 5)
 	{
 		usage(argc, argv);
 		exit(1);
@@ -75,11 +74,15 @@ int main(int argc, char** argv)
 		printf(" ");
 		printString(str, slen);
 		printf("\n");
+		free(str);
+		RTable_Delete(rt);
+		exit(0);
 	}
 	else
+	{
 		printf("Could not reverse hash\n");
-
-	free(str);
-	RTable_Delete(rt);
-	return 0;
+		free(str);
+		RTable_Delete(rt);
+		exit(1);
+	}
 }

@@ -26,7 +26,6 @@ static void usage(int argc, char** argv)
 	printf
 	(
 		"Usage: %s slen l_chains n_chains dst\n"
-		"\n"
 		"create a new Rainbow Table in dst\n"
 		"\n"
 		"PARAMS:\n"
@@ -48,15 +47,15 @@ static void stopGenerating(int signal)
 
 int main(int argc, char** argv)
 {
-	if (!strcmp(argv[1], "--version") || !strcmp(argv[1], "-v"))
+	if (argc == 1 || !strcmp(argv[1], "--help") || !strcmp(argv[1], "-h"))
+	{
+		usage(argc, argv);
+		exit(0);
+	}
+	else if (!strcmp(argv[1], "--version") || !strcmp(argv[1], "-v"))
 	{
 		printf("rtgen\n");
 		printf("Compiled on %s at %s\n", __DATE__, __TIME__);
-		exit(0);
-	}
-	else if (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-h"))
-	{
-		usage(argc, argv);
 		exit(0);
 	}
 
