@@ -19,11 +19,12 @@ static void usage(int argc, char** argv)
 
 	printf
 	(
-		"Usage: %s l_string l_chains n_chains hash src\n"
+		"Usage: %s l_string s_reduce l_chains n_chains hash src\n"
 		"try and reverse a hash\n"
 		"\n"
 		"PARAMS:\n"
 		"  l_string   length of the non-hashed string / key\n"
+		"  s_reduce   reduction function seed\n"
 		"  l_chains   length of the chains to generate\n"
 		"  n_chains   the number of chains in the table_n"
 		"  hash       the hash to be reversed\n"
@@ -47,7 +48,7 @@ int main(int argc, char** argv)
 		exit(0);
 	}
 
-	if (argc < 6)
+	if (argc < 7)
 	{
 		usage(argc, argv);
 		exit(1);
@@ -55,14 +56,15 @@ int main(int argc, char** argv)
 
 	char* charset  = "0123456789abcdefghijklmnopqrstuvwxyz";
 	u32   l_string = atoi(argv[1]);
-	u32   l_chains = atoi(argv[2]);
-	u32   n_chains = atoi(argv[3]);
-	char* hashstr  = argv[4];
-	char* filename = argv[5];
+	u32   s_reduce = atoi(argv[2]);
+	u32   l_chains = atoi(argv[3]);
+	u32   n_chains = atoi(argv[4]);
+	char* hashstr  = argv[5];
+	char* filename = argv[6];
 
 	// load table
 	RTable rt;
-	RTable_New(&rt, l_string, charset, l_chains, n_chains);
+	RTable_New(&rt, l_string, charset, s_reduce, l_chains, n_chains);
 	if (!RTable_FromFile(&rt, filename))
 		ERROR("Could no load table\n")
 

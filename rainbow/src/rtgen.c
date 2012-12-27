@@ -17,11 +17,12 @@ static void usage(int argc, char** argv)
 
 	printf
 	(
-		"Usage: %s l_string l_chains n_chains dst\n"
+		"Usage: %s l_string s_reduce l_chains n_chains dst\n"
 		"create a new Rainbow Table in dst\n"
 		"\n"
 		"PARAMS:\n"
 		"  l_string   length of the non-hashed string / key\n"
+		"  s_reduce   reduction function seed\n"
 		"  l_chains   length of the chains to generate\n"
 		"  n_chains   the number of chains to be generated\n"
 		"  dst        destination file\n"
@@ -51,7 +52,7 @@ int main(int argc, char** argv)
 		exit(0);
 	}
 
-	if (argc < 5)
+	if (argc < 6)
 	{
 		usage(argc, argv);
 		exit(1);
@@ -59,12 +60,13 @@ int main(int argc, char** argv)
 
 	char* charset  = "0123456789abcdefghijklmnopqrstuvwxyz";
 	u32   l_string = atoi(argv[1]);
-	u32   l_chains = atoi(argv[2]);
-	u32   n_chains = atoi(argv[3]);
-	char* filename = argv[4];
+	u32   s_reduce = atoi(argv[2]);
+	u32   l_chains = atoi(argv[3]);
+	u32   n_chains = atoi(argv[4]);
+	char* filename = argv[5];
 
 	RTable rt;
-	RTable_New(&rt, l_string, charset, l_chains, n_chains);
+	RTable_New(&rt, l_string, charset, s_reduce, l_chains, n_chains);
 	srandom(time(NULL));
 
 	// load table, if exists

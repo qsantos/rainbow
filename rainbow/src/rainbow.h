@@ -10,16 +10,17 @@ typedef signed   long s32;
 
 typedef struct
 {
-	u32   n_chains;    // number of currently active chains
-	u32   a_chains;    // space available for 'a_chains' chains
-	u32   sizeofChain; // memory size of a chain
-	char* chains;      // data (chain array)
-
 	u32   l_hash;      // hash length
 	u32   l_string;    // string length
 	char* charset;     // character set
 	u32   n_charset;   // character count
+	u32   s_reduce;    // reduction function seed (first index)
 	u32   l_chains;    // chain length
+
+	u32   n_chains;    // number of currently active chains
+	u32   a_chains;    // space available for 'a_chains' chains
+	u32   sizeofChain; // memory size of a chain
+	char* chains;      // data (chain array)
 
 	char* curstr;      // current starting point
 	char* bufstr;      // temporary string
@@ -28,7 +29,7 @@ typedef struct
 } RTable;
 
 // generation
-void RTable_New      (RTable* rt, u32 l_string, const char* charset, u32 l_chains, u32 a_chains);
+void RTable_New      (RTable* rt, u32 l_string, const char* charset, u32 s_reduce, u32 l_chains, u32 a_chains);
 void RTable_Delete   (RTable* rt);
 char RTable_AddChain (RTable* rt, const char* hash, const char* str);
 char RTable_FindChain(RTable* rt);

@@ -12,7 +12,7 @@
 #define    CHASH(I) (rt->chains  + (I)*rt->sizeofChain  + 1)
 #define     CSTR(I) (rt->chains  + (I)*rt->sizeofChain  + 1 + rt->l_hash)
 
-void RTable_New(RTable* rt, u32 l_string, const char* charset, u32 l_chains, u32 a_chains)
+void RTable_New(RTable* rt, u32 l_string, const char* charset, u32 s_reduce, u32 l_chains, u32 a_chains)
 {
 	rt->n_chains = 0;
 
@@ -22,6 +22,7 @@ void RTable_New(RTable* rt, u32 l_string, const char* charset, u32 l_chains, u32
 
 	rt->charset   = strdup(charset);
 	rt->n_charset = strlen(charset);
+	rt->s_reduce  = s_reduce;
 	rt->l_chains  = l_chains;
 	rt->a_chains  = a_chains;
 
@@ -178,6 +179,7 @@ char RTable_Reverse(RTable* rt, const char* hash, char* dst)
 
 void RTable_Reduce(RTable* rt, u32 step, const char* hash, char* str)
 {
+	step += rt->s_reduce;
 	for (u32 j = 0; j < rt->l_string; j++, str++, hash++, step>>=8)
 		*str = rt->charset[(u8)(*hash ^ step) % rt->n_charset];
 }
