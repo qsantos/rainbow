@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include "rainbow.h"
 
@@ -18,12 +19,12 @@ static void usage(int argc, char** argv)
 
 	printf
 	(
-		"Usage: %s hash src\n"
+		"Usage: %s hash src1 [src2 [...]]\n"
 		"try and reverse a hash\n"
 		"\n"
 		"PARAMS:\n"
 		"  hash       the hash to be reversed\n"
-		"  src        source file\n"
+		"  srcX       rainbow tables\n"
 		,
 		argv[0]
 	);
@@ -50,35 +51,43 @@ int main(int argc, char** argv)
 	}
 
 	char* hashstr  = argv[1];
-	char* filename = argv[2];
 
-	// load table
-	RTable rt;
-	if (!RTable_FromFile(&rt, filename))
-		ERROR("Could no load table\n")
+	// load tables
+	RTable* rt = malloc(sizeof(RTable) * argc - 2);
+	u32 n_rt = argc-2;
+	assert(rt);
+	for (u32 i = 0; i < n_rt; i++)
+		if (!RTable_FromFile(&rt[i], argv[i+2]))
+			ERROR("Could no load table '%s'\n", argv[i+2])
 
 	// try and crack hash
 	char hash[16];
 	hex2hash(hashstr, hash, 16);
 
-	char* str = (char*) malloc(rt.l_string);
-	char res = RTable_Reverse(&rt, hash, str);
+	char* str = (char*) malloc(rt[0].l_string);
 
+	char res;
+	for (u32 i = 0; i < n_rt; i++)
+	{
+		res = RTable_Reverse(&rt[i], hash, str);
+		if (res)
+			break;
+	}
 	if (res)
 	{
 		printHash(hash, 16);
 		printf(" ");
-		printString(str, rt.l_string);
+		printString(str, rt[0].l_string);
 		printf("\n");
-		free(str);
-		RTable_Delete(&rt);
-		exit(0);
 	}
 	else
 	{
 		printf("Could not reverse hash\n");
-		free(str);
-		RTable_Delete(&rt);
-		exit(1);
 	}
+
+	free(str);
+	for (u32 i = 0; i < n_rt; i++)
+		RTable_Delete(&rt[i]);
+
+	return res ? 0 : 1;
 }
