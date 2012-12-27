@@ -13,6 +13,6 @@ shift 3
 
 for i in $(seq $@)
 do
-	bin/rtgen $l_string $i $l_chains $n_chains alnum_${l_strings}_${l_chains}_${n_chains}_$i.rt
+	bin/rtgen $l_string $i $l_chains $n_chains alnum_${l_string}_${l_chains}_${n_chains}_$i.rt
 	echo $i
 done
