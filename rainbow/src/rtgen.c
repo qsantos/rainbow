@@ -73,7 +73,6 @@ int main(int argc, char** argv)
 	RTable_FromFile(&rt, filename);
 
 	// generate more chains
-	printf("Generating chains\n");
 	signal(SIGINT, stopGenerating);
 	u32 progressStep = rt.a_chains / 10000;
 	if (!progressStep) progressStep = 1;
@@ -98,9 +97,7 @@ int main(int argc, char** argv)
 	// finish generation
 	if (generate)
 	{
-		printf("Sorting table\n");
 		RTable_Sort(&rt);
-		printf("Done\n");
 	}
 	else
 		printf("Pausing table generation (%lu chains generated)\n", rt.n_chains);

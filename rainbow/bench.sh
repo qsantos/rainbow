@@ -1,4 +1,5 @@
 #!/bin/bash
+cd $(dirname $0)
 if [ $# -lt 3 ]
 then
 	printf "Usage: %s l_string n_tests src1 [src2 [...]]\n" $0
