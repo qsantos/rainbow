@@ -8,6 +8,16 @@ typedef unsigned char u8;
 typedef unsigned long u32;
 typedef signed   long s32;
 
+typedef struct __attribute__((packed))
+{
+	u32 version; // RTF0 / 0x30465254
+	u32 l_string;
+	u32 s_reduce;
+	u32 l_chains;
+	u32 n_chains;
+	u32 n_charset;
+} RTF_header;
+
 typedef struct
 {
 	u32   l_hash;      // hash length

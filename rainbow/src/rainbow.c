@@ -105,8 +105,22 @@ void RTable_ToFile(RTable* rt, const char* filename)
 		fprintf(stderr, "Could not open '%s'\n", filename);
 		exit(1);
 	}
+
+	RTF_header h =
+	{
+		0x00305254,
+		rt->l_string,
+		rt->s_reduce,
+		rt->l_chains,
+		rt->n_chains,
+		rt->n_charset
+	};
+	fwrite(&h, sizeof(RTF_header), 1, f);
+	fwrite(rt->charset, 1, rt->n_charset, f);
+
 	fwrite(rt->curstr, 1,               rt->l_string, f);
 	fwrite(rt->chains, rt->sizeofChain, rt->a_chains, f);
+
 	fclose(f);
 }
 
@@ -115,6 +129,17 @@ char RTable_FromFile(RTable* rt, const char* filename)
 	FILE* f = filename ? fopen(filename, "r") : stdin;
 	if (!f)
 		return 0;
+
+	// TODO : avoid allocating and freeing charset
+	RTF_header h;
+	fread(&h, sizeof(RTF_header), 1, f);
+	char* charset = malloc(h.n_charset + 1);
+	assert(charset);
+	fread(charset, 1, h.n_charset, f);
+
+	if (rt) RTable_Delete(rt);
+	RTable_New(rt, h.l_string, charset, h.s_reduce, h.l_chains, h.n_chains);
+	free(charset);
 
 	fread(rt->curstr, 1,               rt->l_string, f);
 	fread(rt->chains, rt->sizeofChain, rt->a_chains, f);
