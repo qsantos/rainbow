@@ -30,11 +30,11 @@ typedef struct
 } RTable;
 
 // generation
-RTable* RTable_New      (u32 length, const char* chars, u32 depth, u32 count);
-void    RTable_Delete   (RTable* rt);
-char    RTable_AddChain (RTable* rt, const char* hash, const char* str);
-char    RTable_FindChain(RTable* rt);
-void    RTable_Sort     (RTable* rt);
+void RTable_New      (RTable* rt, u32 length, const char* chars, u32 depth, u32 count);
+void RTable_Delete   (RTable* rt);
+char RTable_AddChain (RTable* rt, const char* hash, const char* str);
+char RTable_FindChain(RTable* rt);
+void RTable_Sort     (RTable* rt);
 
 // loading and storing
 void RTable_ToFile  (RTable* rt, const char* filename);

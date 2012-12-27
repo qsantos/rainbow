@@ -9,7 +9,7 @@
 	fprintf(stderr, __VA_ARGS__); \
 	fprintf(stderr, "\n");        \
 	usage(argc, argv);            \
-	RTable_Delete(rt);            \
+	RTable_Delete(&rt);           \
 	exit(1);                      \
 }
 
@@ -61,8 +61,9 @@ int main(int argc, char** argv)
 	char* filename = argv[5];
 
 	// load table
-	RTable* rt = RTable_New(l_string, charset, l_chains, n_chains);
-	if (!RTable_FromFile(rt, filename))
+	RTable rt;
+	RTable_New(&rt, l_string, charset, l_chains, n_chains);
+	if (!RTable_FromFile(&rt, filename))
 		ERROR("Could no load table\n")
 
 	// try and crack hash
@@ -70,7 +71,7 @@ int main(int argc, char** argv)
 	hex2hash(hashstr, hash, 16);
 
 	char* str = (char*) malloc(l_string);
-	char res = RTable_Reverse(rt, hash, str);
+	char res = RTable_Reverse(&rt, hash, str);
 
 	if (res)
 	{
@@ -79,14 +80,14 @@ int main(int argc, char** argv)
 		printString(str, l_string);
 		printf("\n");
 		free(str);
-		RTable_Delete(rt);
+		RTable_Delete(&rt);
 		exit(0);
 	}
 	else
 	{
 		printf("Could not reverse hash\n");
 		free(str);
-		RTable_Delete(rt);
+		RTable_Delete(&rt);
 		exit(1);
 	}
 }

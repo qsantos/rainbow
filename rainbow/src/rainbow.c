@@ -11,10 +11,8 @@
 #define    CHASH(I) (rt->chains  + (I)*rt->sizeofChain  + 1)
 #define     CSTR(I) (rt->chains  + (I)*rt->sizeofChain  + 1 + rt->l_hash)
 
-RTable* RTable_New(u32 length, const char* chars, u32 depth, u32 count)
+void RTable_New(RTable* rt, u32 length, const char* chars, u32 depth, u32 count)
 {
-	RTable* rt = (RTable*) malloc(sizeof(RTable));
-
 	rt->n_chains = 0;
 
 	rt->l_hash = 16;
@@ -40,8 +38,6 @@ RTable* RTable_New(u32 length, const char* chars, u32 depth, u32 count)
 
 	memset(rt->chains, 0,              rt->sizeofChain * rt->a_chains);
 	memset(rt->curstr, rt->charset[0], rt->l_string);
-
-	return rt;
 }
 
 void RTable_Delete(RTable* rt)

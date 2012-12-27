@@ -63,30 +63,31 @@ int main(int argc, char** argv)
 	u32   n_chains = atoi(argv[3]);
 	char* filename = argv[4];
 
-	RTable* rt = RTable_New(l_string, charset, l_chains, n_chains);
+	RTable rt;
+	RTable_New(&rt, l_string, charset, l_chains, n_chains);
 	srandom(time(NULL));
 
 	// load table, if exists
-	RTable_FromFile(rt, filename);
+	RTable_FromFile(&rt, filename);
 
 	// generate more chains
 	printf("Generating chains\n");
 	signal(SIGINT, stopGenerating);
-	u32 progressStep = rt->a_chains / 10000;
+	u32 progressStep = rt.a_chains / 10000;
 	if (!progressStep) progressStep = 1;
-	while (generate && rt->n_chains < rt->a_chains)
+	while (generate && rt.n_chains < rt.a_chains)
 	{
-		char res = RTable_FindChain(rt);
+		char res = RTable_FindChain(&rt);
 		if (res < 0)
 		{
 			printf("\n");
 			printf("Nothing more to do\n");
 			generate = 0;
 		}
-		else if (res && rt->n_chains % progressStep == 0)
+		else if (res && rt.n_chains % progressStep == 0)
 		{
 			rewriteLine();
-			printf("Progress: %.2f%%", (float) 100 * rt->n_chains / rt->a_chains);
+			printf("Progress: %.2f%%", (float) 100 * rt.n_chains / rt.a_chains);
 			fflush(stdout);
 		}
 	}
@@ -96,14 +97,14 @@ int main(int argc, char** argv)
 	if (generate)
 	{
 		printf("Sorting table\n");
-		RTable_Sort(rt);
+		RTable_Sort(&rt);
 		printf("Done\n");
 	}
 	else
-		printf("Pausing table generation (%lu chains generated)\n", rt->n_chains);
+		printf("Pausing table generation (%lu chains generated)\n", rt.n_chains);
 
 	// save table
-	RTable_ToFile(rt, filename);
-	RTable_Delete(rt);
+	RTable_ToFile(&rt, filename);
+	RTable_Delete(&rt);
 	return 0;
 }
