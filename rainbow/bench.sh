@@ -1,5 +1,5 @@
 #!/bin/bash
-if [ $# -lt 4 ]
+if [ $# -lt 2 ]
 then
 	printf "Usage: %s n_tests filename\n" $0
 	exit 1
