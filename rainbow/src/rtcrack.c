@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <time.h>
 
 #include "md5.h"
 #include "rainbow.h"
@@ -132,7 +133,7 @@ int main(int argc, char** argv)
 		fclose(f);
 		break;
 	case T_RAND:
-		(void) 0;
+		srandom(time(NULL));
 		u32 n = atoi(tparam);
 		for (u32 i = 0; i < n; i++)
 		{
