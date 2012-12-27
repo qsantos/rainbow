@@ -9,7 +9,6 @@
 	fprintf(stderr, __VA_ARGS__); \
 	fprintf(stderr, "\n");        \
 	usage(argc, argv);            \
-	RTable_Delete(&rt);           \
 	exit(1);                      \
 }
 

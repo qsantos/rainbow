@@ -137,7 +137,7 @@ char RTable_FromFile(RTable* rt, const char* filename)
 	assert(charset);
 	fread(charset, 1, h.n_charset, f);
 
-	if (rt) RTable_Delete(rt);
+//	if (rt) RTable_Delete(rt); // TODO
 	RTable_New(rt, h.l_string, charset, h.s_reduce, h.l_chains, h.n_chains);
 	free(charset);
 
