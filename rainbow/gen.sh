@@ -1,8 +1,10 @@
 #!/bin/bash
 cd $(dirname $0)
-if [ $# -lt 3 ]
+if [ $# -lt 4 ]
 then
-	printf "Usage: %s l_string l_chains n_chains n_parts\n" $0
+	printf "Usage: %s l_string l_chains n_chains PARTS\n" $0
+	printf "\n"
+	printf "PARTS  are arguments given to seq (e.g. '10', '0 9')\n"
 	exit 1
 fi
 l_string=$1
