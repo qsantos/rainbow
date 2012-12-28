@@ -1,5 +1,6 @@
 #!/bin/bash
 cd $(dirname $0)
+trap "exit" INT
 if [ $# -lt 4 ]
 then
 	printf "Usage: %s l_string l_chains n_chains PARTS\n" $0
