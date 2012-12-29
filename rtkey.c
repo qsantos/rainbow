@@ -6,6 +6,15 @@
 typedef unsigned long      u32;
 typedef unsigned long long u64;
 
+void index2key(u64 index, char* key, u32 l_string, const char* charset, u32 n_charset)
+{
+	for (u32 i = 0; i < l_string; i++, key++)
+	{
+		*key = charset[index % n_charset];
+		index /= n_charset;
+	}
+}
+
 void usage(int argc, char** argv)
 {
 	(void) argc;
@@ -41,19 +50,14 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
+	const u32   l_string  = atol(argv[1]);
 	const char* charset   = "0123456789abcdefghijklmnopqrstuvwxyz";
 	const u32   n_charset = strlen(charset);
-	const u32   l_string  = atol(argv[1]);
 	const u64   index     = atoll(argv[2]);
 
 	char* string = malloc(l_string);
 	assert(string);
-	u64 idx = index;
-	for (u32 digit = 0; digit < l_string; digit++)
-	{
-		string[digit] = charset[idx % n_charset];
-		idx /= n_charset;
-	}
+	index2key(index, string, l_string, charset, n_charset);
 	printf("key no %llu = '%s'\n", index, string);
 	free(string);
 

@@ -1,7 +1,7 @@
 CC      = gcc
 CFLAGS  = -Wall -Wextra -Werror -pedantic -std=c99 -O3 -D_XOPEN_SOURCE=600
 LDFLAGS = -O3
-TARGETS = rtgen rtcrack
+TARGETS = rtgen rtcrack rtkey
 
 all: $(TARGETS)
 
