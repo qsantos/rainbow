@@ -24,7 +24,7 @@ static void usage(int argc, char** argv)
 
 	printf
 	(
-		"Usage: %s l_string s_reduce l_chains n_chains dst\n"
+		"Usage: %s l_string s_reduce l_chains n_chains part dst\n"
 		"create a new Rainbow Table in dst\n"
 		"\n"
 		"PARAMS:\n"
@@ -32,8 +32,29 @@ static void usage(int argc, char** argv)
 		"  s_reduce   reduction function seed\n"
 		"  l_chains   length of the chains to generate\n"
 		"  n_chains   the number of chains to be generated\n"
+		"  part       number of the table part (contains n_chains chains)\n"
 		"  dst        destination file\n"
+		"\n"
+		"Examples\n"
+		"  $ %s 6 0 1000 500000 0\n"
+		"  $ %s 6 0 1000 500000 1\n"
+		"  $ %s 6 0 1000 500000 2\n"
+		"  $ %s 6 0 1000 500000 3\n"
+		"\n"
+		"  $ %s 6 1 1000 500000 0\n"
+		"  $ %s 6 1 1000 500000 1\n"
+		"  $ %s 6 1 1000 500000 2\n"
+		"  $ %s 6 1 1000 500000 3\n"
+		"...\n"
 		,
+		argv[0],
+		argv[0],
+		argv[0],
+		argv[0],
+		argv[0],
+		argv[0],
+		argv[0],
+		argv[0],
 		argv[0]
 	);
 }
