@@ -15,11 +15,30 @@
 	exit(1);                      \
 }
 
-static char reverseHash(RTable* rt, u32 n_rt, const char hash[16], char* bufstr)
+static RTable* rt     = NULL;
+static u32     n_rt   = 0;
+static char**  files  = NULL;
+static char*   bufstr = NULL;
+
+static char reverseHash(const char hash[16])
 {
-	for (u32 i = 0; i < n_rt; i++)
-		if (RTable_Reverse(&rt[i], hash, bufstr))
-			return 1;
+	if (files)
+	{
+		for (u32 i = 0; i < n_rt; i++)
+		{
+			RTable_FromFile(rt, files[i]);
+			char res = RTable_Reverse(rt, hash, bufstr);
+			RTable_Delete(rt);
+			if (res)
+				return 1;
+		}
+	}
+	else
+	{
+		for (u32 i = 0; i < n_rt; i++)
+			if (RTable_Reverse(&rt[i], hash, bufstr))
+				return 1;
+	}
 	return 0;
 }
 
@@ -86,26 +105,42 @@ int main(int argc, char** argv)
 	char* tparam = argv[2];
 
 	// load tables
-	u32 n_rt = argc-3;
-	RTable* rt = malloc(sizeof(RTable) * n_rt);
-	assert(rt);
-	for (u32 i = 0; i < n_rt; i++)
-		if (!RTable_FromFile(&rt[i], argv[i+3]))
-			ERROR("Could no load table '%s'\n", argv[i+3])
+	n_rt = argc-3;
+	if (1) // load the tables one after another for each reversing
+	{
+		rt = malloc(sizeof(RTable));
+		files = argv + 3;
+		assert(rt);
+	}
+	else
+	{
+		rt = malloc(sizeof(RTable) * n_rt);
+		assert(rt);
+		for (u32 i = 0; i < n_rt; i++)
+			if (!RTable_FromFile(&rt[i], argv[i+3]))
+				ERROR("Could no load table '%s'\n", argv[i+3])
+	}
 
-	// try and crack hash(es)
+	// some parameters
+	// TODO
+	RTable_FromFile(rt, argv[4]);
 	u32   l_string  = rt[0].l_string;
 	char* charset   = rt[0].charset;
 	u32   n_charset = rt[0].n_charset;
-	char* bufstr    = malloc(l_string);
-	u32   n_crack   = 0;
+	RTable_Delete(rt);
+
+	// some buffers
 	char hash[16];
+	bufstr = malloc(l_string);
 	assert(bufstr);
+
+	// try and crack hash(es)
+	u32 n_crack = 0;
 	switch (ttype)
 	{
 	case T_HASH:
 		hex2hash(tparam, hash, 16);
-		if (reverseHash(rt, n_rt, hash, bufstr))
+		if (reverseHash(hash))
 		{
 			printHash(hash, 16);
 			printf(" ");
@@ -129,7 +164,7 @@ int main(int argc, char** argv)
 				break;
 
 			hex2hash(hashstr, hash, 16);
-			if (reverseHash(rt, n_rt, hashstr, bufstr))
+			if (reverseHash(hashstr))
 			{
 				printHash(hash, 16);
 				printf(" ");
@@ -154,7 +189,7 @@ int main(int argc, char** argv)
 
 			char hash[16];
 			MD5((u8*) hash, (u8*) bufstr, l_string);
-			if (reverseHash(rt, n_rt, hash, bufstr))
+			if (reverseHash(hash))
 				n_crack++;
 
 			rewriteLine();
@@ -165,8 +200,10 @@ int main(int argc, char** argv)
 	}
 	free(bufstr);
 
-	for (u32 i = 0; i < n_rt; i++)
-		RTable_Delete(&rt[i]);
+	if (!files)
+		for (u32 i = 0; i < n_rt; i++)
+			RTable_Delete(&rt[i]);
+	free(rt);
 
 	return 0;
 }
