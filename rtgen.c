@@ -81,12 +81,12 @@ int main(int argc, char** argv)
 	}
 
 	char* charset  = "0123456789abcdefghijklmnopqrstuvwxyz";
-	u32   l_string = atoi(argv[1]);
-	u32   s_reduce = atoi(argv[2]);
-	u32   l_chains = atoi(argv[3]);
-	u32   n_chains = atoi(argv[4]);
-	u32   n_parts  = atoi(argv[5]);
-	u32   part     = atoi(argv[6]);
+	u32   l_string = atol(argv[1]);
+	u32   s_reduce = atol(argv[2]);
+	u32   l_chains = atol(argv[3]);
+	u32   n_chains = atol(argv[4]);
+	u32   n_parts  = atol(argv[5]);
+	u32   part     = atol(argv[6]);
 	char* filename = argv[7];
 
 	RTable rt;
