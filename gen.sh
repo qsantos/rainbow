@@ -1,5 +1,4 @@
 #!/bin/bash
-cd $(dirname $0)
 trap "exit" INT
 if [ $# -lt 4 ]
 then
@@ -16,6 +15,6 @@ shift 3
 
 for i in $(seq $@)
 do
-	bin/rtgen $l_string $i $l_chains $n_chains rt/alnum_${l_string}_${l_chains}_${n_chains}_$i.rt
+	rtgen $l_string $i $l_chains $n_chains rt/alnum_${l_string}_${l_chains}_${n_chains}_$i.rt
 	echo $i
 done
