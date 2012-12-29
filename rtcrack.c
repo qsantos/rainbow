@@ -15,6 +15,7 @@
 	exit(1);                      \
 }
 
+// some variables used internally by reverseHash()
 static RTable* rt     = NULL;
 static u32     n_rt   = 0;
 static char**  files  = NULL;
