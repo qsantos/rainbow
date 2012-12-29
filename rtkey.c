@@ -2,31 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include <math.h>
 
-typedef unsigned long      u32;
-typedef unsigned long long u64;
-
-char index2key(u64 index, char* key, u32 l_min, u32 l_max, const char* charset, u32 n_charset)
-{
-	u32 l_key = l_min;
-	u64 n_key = pow(n_charset, l_min);
-	while (index >= n_key)
-	{
-		index -= n_key;
-		n_key *= n_charset;
-		l_key++;
-	}
-	if (l_key > l_max)
-		return 0;
-
-	for (u32 i = 0; i < l_key; i++, key++)
-	{
-		*key = charset[index % n_charset];
-		index /= n_charset;
-	}
-	return 1;
-}
+#include "rainbow.h"
 
 void usage(int argc, char** argv)
 {

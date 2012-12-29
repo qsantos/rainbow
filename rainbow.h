@@ -4,9 +4,10 @@
 // a chain is made of a status byte, a hash and a string
 // the length of a chain is therefore 1+l_hash+l_string (sizeofChain)
 
-typedef unsigned char u8;
-typedef unsigned long u32;
-typedef signed   long s32;
+typedef unsigned char      u8;
+typedef unsigned long      u32;
+typedef unsigned long long u64;
+typedef signed   long      s32;
 
 typedef struct __attribute__((packed))
 {
@@ -61,5 +62,6 @@ char bstrncmp   (const char* a, const char* b, u32 n);
 void hex2hash   (const char* hex, char* hash, u32 l_hash);
 void printHash  (const char* hash, u32 l_hash);
 void printString(const char* str, u32 l_string);
+char index2key  (u64 index, char* key, u32 l_min, u32 l_max, const char* charset, u32 n_charset);
 
 #endif
