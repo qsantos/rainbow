@@ -43,8 +43,7 @@ static void usage(int argc, char** argv)
 {
 	(void) argc;
 
-	printf
-	(
+	fprintf(stderr,
 		"Usage: %s TARGET src1 [src2 [...]]\n"
 		"Try and reverse one or several hashes\n"
 		"\n"
@@ -106,15 +105,16 @@ int main(int argc, char** argv)
 			ERROR("Could no load table '%s'\n", argv[i+3])
 
 	// try and crack hash(es)
-	u32   n_crack   = 0;
 	u32   l_string  = rt[0].l_string;
 	char* charset   = rt[0].charset;
 	u32   n_charset = rt[0].n_charset;
-	char* bufstr    = (char*) malloc(l_string);
+	char* bufstr    = malloc(l_string);
+	u32   n_crack   = 0;
+	assert(bufstr);
 	switch (ttype)
 	{
 	case T_HASH:
-		n_crack += reverseHash(rt, n_rt, tparam, l_string, bufstr);
+		reverseHash(rt, n_rt, tparam, l_string, bufstr);
 		break;
 	case T_FILE:
 		(void) 0;
@@ -159,5 +159,5 @@ int main(int argc, char** argv)
 	for (u32 i = 0; i < n_rt; i++)
 		RTable_Delete(&rt[i]);
 
-	return n_crack;
+	return 0;
 }
