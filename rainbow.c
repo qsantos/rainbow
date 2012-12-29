@@ -51,6 +51,16 @@ void RTable_Delete(RTable* rt)
 	free(rt->chains);
 }
 
+// Hash table implementation
+static u32 HashFun(const char* str, u32 len);
+static u32 RTable_HFind(RTable* rt, const char* str)
+{
+	u32 cur = HashFun(str, rt->l_string) % rt->a_chains;
+	while (CACTIVE(cur) && bstrncmp(CHASH(cur), str, rt->l_string) != 0)
+		if (++cur >= rt->a_chains)
+			cur = 0;
+	return cur;
+}
 char RTable_AddChain(RTable* rt, const char* hash, const char* str)
 {
 	// collision detection
@@ -92,9 +102,34 @@ char RTable_FindChain(RTable* rt)
 	return RTable_AddChain(rt, rt->bufhash, rt->curstr);
 }
 
+static void swap(RTable* rt, u32 a, u32 b)
+{
+	memcpy(rt->bufchain,                   rt->chains + a*rt->sizeofChain, rt->sizeofChain);
+	memcpy(rt->chains + a*rt->sizeofChain, rt->chains + b*rt->sizeofChain, rt->sizeofChain);
+	memcpy(rt->chains + b*rt->sizeofChain, rt->bufchain,                   rt->sizeofChain);
+}
+static void quicksort(RTable* rt, u32 left, u32 right)
+{
+	if (left >= right)
+		return;
+
+	swap(rt, (left+right)/2, right);
+	char* pivotValue = CHASH(right);
+	u32 storeIndex = left;
+	for (u32 i = left; i < right; i++)
+		if (bstrncmp(CHASH(i), pivotValue, rt->l_hash) < 0)
+			swap(rt, i, storeIndex++);
+
+	swap(rt, storeIndex, right);
+
+	if (storeIndex)
+		quicksort(rt, left, storeIndex-1);
+	quicksort(rt, storeIndex+1, right);
+}
+
 void RTable_Sort(RTable* rt)
 {
-	RTable_QSort(rt, 0, rt->a_chains-1);
+	quicksort(rt, 0, rt->a_chains-1);
 }
 
 void RTable_ToFile(RTable* rt, const char* filename)
@@ -115,11 +150,10 @@ void RTable_ToFile(RTable* rt, const char* filename)
 		rt->n_chains,
 		rt->n_charset
 	};
-	fwrite(&h, sizeof(RTF_header), 1, f);
-	fwrite(rt->charset, 1, rt->n_charset, f);
-
-	fwrite(rt->curstr, 1,               rt->l_string, f);
-	fwrite(rt->chains, rt->sizeofChain, rt->a_chains, f);
+	fwrite(&h,          sizeof(RTF_header), 1,             f);
+	fwrite(rt->charset, 1,                  rt->n_charset, f);
+	fwrite(rt->curstr,  1,                  rt->l_string,  f);
+	fwrite(rt->chains,  rt->sizeofChain,    rt->a_chains,  f);
 
 	fclose(f);
 }
@@ -130,12 +164,14 @@ char RTable_FromFile(RTable* rt, const char* filename)
 	if (!f)
 		return 0;
 
-	// TODO : avoid allocating and freeing charset
 	RTF_header h;
 	fread(&h, sizeof(RTF_header), 1, f);
+
+	// TODO : avoid allocating and freeing charset
 	char* charset = malloc(h.n_charset + 1);
 	assert(charset);
 	fread(charset, 1, h.n_charset, f);
+	charset[h.n_charset] = 0;
 
 //	if (rt) RTable_Delete(rt); // TODO
 	RTable_New(rt, h.l_string, charset, h.s_reduce, h.l_chains, h.n_chains);
@@ -163,6 +199,24 @@ void RTable_Print(RTable* rt)
 	}
 }
 
+
+static s32 binaryFind(RTable* rt, const char* hash)
+{
+	u32 start = 0;
+	u32 end   = rt->a_chains-1;
+	while (start != end)
+	{
+		u32 middle = (start + end) / 2;
+		if (bstrncmp(hash, CHASH(middle), rt->l_hash) <= 0)
+			end = middle;
+		else
+			start = middle + 1;
+	}
+	if (bstrncmp(CHASH(start), hash, rt->l_hash) == 0)
+		return start;
+	else
+		return -1;
+}
 char RTable_Reverse(RTable* rt, const char* hash, char* dst)
 {
 	// test for every distance to the end point
@@ -177,7 +231,7 @@ char RTable_Reverse(RTable* rt, const char* hash, char* dst)
 		}
 
 		// find the hash's chain
-		s32 res = RTable_BFind(rt, rt->bufhash);
+		s32 res = binaryFind(rt, rt->bufhash);
 		if (res < 0)
 			continue;
 
@@ -206,60 +260,6 @@ void RTable_Reduce(RTable* rt, u32 step, const char* hash, char* str)
 	step += rt->s_reduce;
 	for (u32 j = 0; j < rt->l_string; j++, str++, hash++, step>>=8)
 		*str = rt->charset[(u8)(*hash ^ step) % rt->n_charset];
-}
-
-static void swap(RTable* rt, u32 a, u32 b)
-{
-	memcpy(rt->bufchain,                   rt->chains + a*rt->sizeofChain, rt->sizeofChain);
-	memcpy(rt->chains + a*rt->sizeofChain, rt->chains + b*rt->sizeofChain, rt->sizeofChain);
-	memcpy(rt->chains + b*rt->sizeofChain, rt->bufchain,                   rt->sizeofChain);
-}
-void RTable_QSort(RTable* rt, u32 left, u32 right)
-{
-	if (left >= right)
-		return;
-
-	swap(rt, (left+right)/2, right);
-	char* pivotValue = CHASH(right);
-	u32 storeIndex = left;
-	for (u32 i = left; i < right; i++)
-		if (bstrncmp(CHASH(i), pivotValue, rt->l_hash) < 0)
-			swap(rt, i, storeIndex++);
-
-	swap(rt, storeIndex, right);
-
-	if (storeIndex)
-		RTable_QSort(rt, left, storeIndex-1);
-	RTable_QSort(rt, storeIndex+1, right);
-}
-
-s32 RTable_BFind(RTable* rt, const char* hash)
-{
-	u32 start = 0;
-	u32 end   = rt->a_chains-1;
-	while (start != end)
-	{
-		u32 middle = (start + end) / 2;
-		if (bstrncmp(hash, CHASH(middle), rt->l_hash) <= 0)
-			end = middle;
-		else
-			start = middle + 1;
-	}
-	if (bstrncmp(CHASH(start), hash, rt->l_hash) == 0)
-		return start;
-	else
-		return -1;
-}
-
-// Hash table implementation
-static u32 HashFun(const char* str, u32 len);
-u32 RTable_HFind(RTable* rt, const char* str)
-{
-	u32 cur = HashFun(str, rt->l_string) % rt->a_chains;
-	while (CACTIVE(cur) && bstrncmp(CHASH(cur), str, rt->l_string) != 0)
-		if (++cur >= rt->a_chains)
-			cur = 0;
-	return cur;
 }
 
 char bstrncmp(const char* a, const char* b, u32 n)

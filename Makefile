@@ -1,24 +1,22 @@
 CC      = gcc
 CFLAGS  = -Wall -Wextra -Werror -pedantic -std=c99 -O3 -D_XOPEN_SOURCE=600
 LDFLAGS = -O3
-OBJDIR  = ../obj
-BINDIR  = ../bin
 TARGETS = rtgen rtcrack
 
-all: $(addprefix $(BINDIR)/, $(TARGETS))
+all: $(TARGETS)
 
-$(BINDIR)/%: $(addprefix $(OBJDIR)/, %.o md5.o rainbow.o)
+rt%: rt%.o md5.o rainbow.o
 	@mkdir -p $(@D)
 	$(CC) $(LDFLAGS) $^ -o $@
 
-$(OBJDIR)/%.o: %.c
+%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -Rf $(OBJDIR)
+	rm -f *.o
 
 destroy: clean
-	rm -Rf $(BINDIR)
+	rm -f $(TARGETS)
 
 rebuild: destroy all
