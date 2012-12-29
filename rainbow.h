@@ -50,14 +50,11 @@ void RTable_ToFile  (RTable* rt, const char* filename);
 char RTable_FromFile(RTable* rt, const char* filename);
 
 // misc
-void RTable_Print    (RTable* rt);
-char RTable_Reverse  (RTable* rt, const char* hash, char* dst);
+void RTable_Print  (RTable* rt);
+char RTable_Reverse(RTable* rt, const char* hash, char* dst);
 
 // internal use
 void RTable_Reduce(RTable* rt, u32 step, const char* hash, char* str); // hash to string reduce function
-void RTable_QSort (RTable* rt, u32 left, u32 right);                   // quick sort
-s32  RTable_BFind (RTable* rt, const char* hash);                      // binary search
-u32  RTable_HFind (RTable* rt, const char* str);                       // hash table search
 
 // useful functions
 char bstrncmp   (const char* a, const char* b, u32 n);
