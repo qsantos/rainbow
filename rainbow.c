@@ -39,8 +39,7 @@ void RTable_New(RTable* rt, u32 l_string, const char* charset, u32 s_reduce, u32
 	assert(rt->bufhash);
 	assert(rt->bufchain);
 
-	memset(rt->chains, 0,              rt->sizeofChain * rt->a_chains);
-	memset(rt->curstr, rt->charset[0], rt->l_string);
+	memset(rt->chains, 0, rt->sizeofChain * rt->a_chains);
 }
 
 void RTable_Delete(RTable* rt)
@@ -77,19 +76,10 @@ char RTable_AddChain(RTable* rt, const char* hash, const char* str)
 	return 0;
 }
 
-char RTable_FindChain(RTable* rt)
+char RTable_StartAt(RTable* rt, u64 index)
 {
 	// pick a starting point
-	char* c = rt->curstr;
-	while (*c)
-	{
-		char* n = strchr(rt->charset, *c);
-		if ((*c = n[1]))
-			break;
-		*c = rt->charset[0];
-		c++;
-	}
-	if (!*c)
+	if (!index2key(index, rt->curstr, rt->l_string, rt->l_string, rt->charset, rt->n_charset))
 		return -1;
 
 	// start a new chain from 'str'

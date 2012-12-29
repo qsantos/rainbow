@@ -76,9 +76,10 @@ int main(int argc, char** argv)
 	signal(SIGINT, stopGenerating);
 	u32 progressStep = rt.a_chains / 10000;
 	if (!progressStep) progressStep = 1;
+	u64 startPointIdx = 0;
 	while (generate && rt.n_chains < rt.a_chains)
 	{
-		char res = RTable_FindChain(&rt);
+		char res = RTable_StartAt(&rt, startPointIdx++);
 		if (res < 0)
 		{
 			printf("\n");
