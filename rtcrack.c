@@ -46,7 +46,7 @@ static void usage(int argc, char** argv)
 	printf
 	(
 		"Usage: %s TARGET src1 [src2 [...]]\n"
-		"try and reverse one or several hashes\n"
+		"Try and reverse one or several hashes\n"
 		"\n"
 		"TARGET:\n"
 		" -x, --hash HASH  sets the target to HASH\n"

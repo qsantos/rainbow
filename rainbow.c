@@ -200,7 +200,7 @@ void RTable_Print(RTable* rt)
 }
 
 
-static s32 RTable_BFind(RTable* rt, const char* hash)
+static s32 binaryFind(RTable* rt, const char* hash)
 {
 	u32 start = 0;
 	u32 end   = rt->a_chains-1;
@@ -231,7 +231,7 @@ char RTable_Reverse(RTable* rt, const char* hash, char* dst)
 		}
 
 		// find the hash's chain
-		s32 res = RTable_BFind(rt, rt->bufhash);
+		s32 res = binaryFind(rt, rt->bufhash);
 		if (res < 0)
 			continue;
 
