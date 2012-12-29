@@ -24,27 +24,28 @@ static void usage(int argc, char** argv)
 
 	printf
 	(
-		"Usage: %s l_string s_reduce l_chains n_chains part dst\n"
+		"Usage: %s l_string s_reduce l_chains n_chains n_parts part dst\n"
 		"create a new Rainbow Table in dst\n"
 		"\n"
 		"PARAMS:\n"
 		"  l_string   length of the non-hashed string / key\n"
-		"  s_reduce   reduction function seed\n"
+		"  s_reduce   reduction function seed (i.e. table index)\n"
 		"  l_chains   length of the chains to generate\n"
 		"  n_chains   the number of chains to be generated\n"
-		"  part       number of the table part (contains n_chains chains)\n"
+		"  n_parts    the number of parts to split the table in\n"
+		"  part       number of the table part (i.e. table part)\n"
 		"  dst        destination file\n"
 		"\n"
 		"Examples\n"
-		"  $ %s 6 0 1000 500000 0\n"
-		"  $ %s 6 0 1000 500000 1\n"
-		"  $ %s 6 0 1000 500000 2\n"
-		"  $ %s 6 0 1000 500000 3\n"
+		"  $ %s 6 0 1000 500000 4 0 a0_0.rt\n"
+		"  $ %s 6 0 1000 500000 4 1 a0_1.rt\n"
+		"  $ %s 6 0 1000 500000 4 2 a0_2.rt\n"
+		"  $ %s 6 0 1000 500000 4 3 a0_3.rt\n"
 		"\n"
-		"  $ %s 6 1 1000 500000 0\n"
-		"  $ %s 6 1 1000 500000 1\n"
-		"  $ %s 6 1 1000 500000 2\n"
-		"  $ %s 6 1 1000 500000 3\n"
+		"  $ %s 6 1 1000 500000 4 0 a0_0.rt\n"
+		"  $ %s 6 1 1000 500000 4 1 a0_1.rt\n"
+		"  $ %s 6 1 1000 500000 4 2 a0_2.rt\n"
+		"  $ %s 6 1 1000 500000 4 3 a0_3.rt\n"
 		"...\n"
 		,
 		argv[0],
@@ -73,7 +74,7 @@ int main(int argc, char** argv)
 		exit(0);
 	}
 
-	if (argc < 6)
+	if (argc < 8)
 	{
 		usage(argc, argv);
 		exit(1);
@@ -84,7 +85,9 @@ int main(int argc, char** argv)
 	u32   s_reduce = atoi(argv[2]);
 	u32   l_chains = atoi(argv[3]);
 	u32   n_chains = atoi(argv[4]);
-	char* filename = argv[5];
+	u32   n_parts  = atoi(argv[5]);
+	u32   part     = atoi(argv[6]);
+	char* filename = argv[7];
 
 	RTable rt;
 	RTable_New(&rt, l_string, charset, s_reduce, l_chains, n_chains);
@@ -97,10 +100,11 @@ int main(int argc, char** argv)
 	signal(SIGINT, stopGenerating);
 	u32 progressStep = rt.a_chains / 10000;
 	if (!progressStep) progressStep = 1;
-	u64 startPointIdx = 0;
+	u64 startPointIdx = part;
 	while (generate && rt.n_chains < rt.a_chains)
 	{
-		char res = RTable_StartAt(&rt, startPointIdx++);
+		char res = RTable_StartAt(&rt, startPointIdx);
+		startPointIdx += n_parts;
 		if (res < 0)
 		{
 			printf("\n");
