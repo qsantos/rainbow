@@ -136,7 +136,6 @@ int main(int argc, char** argv)
 	assert(bufstr);
 
 	// try and crack hash(es)
-	u32 n_crack = 0;
 	switch (ttype)
 	{
 	case T_HASH:
@@ -165,14 +164,12 @@ int main(int argc, char** argv)
 				break;
 
 			hex2hash(hashstr, hash, 16);
-			if (reverseHash(hashstr))
+			if (reverseHash(hash))
 			{
 				printHash(hash, 16);
 				printf(" ");
 				printString(bufstr, l_string);
 				printf("\n");
-
-				n_crack++;
 			}
 			else
 				printf("Could not reverse hash\n");
@@ -183,6 +180,7 @@ int main(int argc, char** argv)
 	case T_RAND:
 		srandom(time(NULL));
 		u32 n = atoi(tparam);
+		u32 n_crack = 0;
 		for (u32 i = 0; i < n; i++)
 		{
 			for (u32 j = 0; j < l_string; j++)
