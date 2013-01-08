@@ -22,8 +22,7 @@ static void usage(int argc, char** argv)
 {
 	(void) argc;
 
-	printf
-	(
+	fprintf(stderr,
 		"Usage: %s l_string s_reduce l_chains n_chains n_parts part dst\n"
 		"create a new Rainbow Table in dst\n"
 		"\n"
