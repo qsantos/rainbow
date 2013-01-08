@@ -90,11 +90,11 @@ int main(int argc, char** argv)
 	char* filename = argv[7];
 
 	RTable rt;
-	RTable_New(&rt, l_string, charset, s_reduce, l_chains, n_chains);
+	if (!RTable_FromFile(&rt, filename))
+		RTable_New(&rt, l_string, charset, s_reduce, l_chains, n_chains);
 	srandom(time(NULL));
 
 	// load table, if exists
-	RTable_FromFile(&rt, filename);
 
 	// generate more chains
 	signal(SIGINT, stopGenerating);
