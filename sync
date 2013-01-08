@@ -1,7 +1,0 @@
-#!/bin/bash
-git checkout master
-git pull origin master
-git merge local
-git push origin master
-git checkout local
-git merge master
