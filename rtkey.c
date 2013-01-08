@@ -5,7 +5,7 @@
 
 #include "rainbow.h"
 
-void usage(int argc, char** argv)
+static void usage(int argc, char** argv)
 {
 	(void) argc;
 
