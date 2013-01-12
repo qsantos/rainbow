@@ -18,6 +18,28 @@ static void stopGenerating(int signal)
 	generate = 0;
 }
 
+static void progress(float ratio, time_t started)
+{
+	// compute ETA
+	time_t seconds = (time(NULL) - started) * (1/ratio - 1);
+	time_t minutes = seconds / 60; seconds %= 60;
+	time_t hours   = minutes / 60; minutes %= 60;
+	time_t days    = hours   / 24; hours   %= 24;
+	time_t weeks   = days    /  7; days    %=  7;
+
+	rewriteLine();
+
+	printf("Progress: %.2f%% (ETA:", 100 * ratio);
+	if (weeks)   { printf(" %lu weeks",   weeks);   hours   = 0; }
+	if (days)    { printf(" %lu days",    days);    minutes = 0; }
+	if (hours)   { printf(" %lu hours",   hours);   seconds = 0; }
+	if (minutes) { printf(" %lu minutes", minutes);              }
+	if (seconds) { printf(" %lu seconds", seconds);              }
+	printf(")");
+
+	fflush(stdout);
+}
+
 static void usage(int argc, char** argv)
 {
 	(void) argc;
@@ -88,12 +110,15 @@ int main(int argc, char** argv)
 	u32   part     = atol(argv[6]);
 	char* filename = argv[7];
 
+	// init table
 	RTable rt;
 	if (!RTable_FromFile(&rt, filename))
 		RTable_New(&rt, l_string, charset, s_reduce, l_chains, n_chains);
 	srandom(time(NULL));
 
-	// load table, if exists
+	u32    startNChains = rt.n_chains;
+	time_t started      = time(NULL);
+	time_t last         = 0;
 
 	// generate more chains
 	signal(SIGINT, stopGenerating);
@@ -110,11 +135,12 @@ int main(int argc, char** argv)
 			printf("Nothing more to do\n");
 			generate = 0;
 		}
-		else if (res && rt.n_chains % progressStep == 0)
+		else if (time(NULL) - last)
 		{
-			rewriteLine();
-			printf("Progress: %.2f%%", (float) 100 * rt.n_chains / rt.a_chains);
-			fflush(stdout);
+			last = time(NULL);
+			float ratio = rt.n_chains - startNChains;
+			ratio      /= rt.a_chains - startNChains;
+			progress(ratio, started);
 		}
 	}
 	rewriteLine();
