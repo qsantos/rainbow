@@ -30,11 +30,11 @@ static void progress(float ratio, time_t started)
 	rewriteLine();
 
 	printf("Progress: %.2f%% (ETA:", 100 * ratio);
-	if (weeks)   { printf(" %lu weeks",   weeks);   hours   = 0; }
-	if (days)    { printf(" %lu days",    days);    minutes = 0; }
-	if (hours)   { printf(" %lu hours",   hours);   seconds = 0; }
-	if (minutes) { printf(" %lu minutes", minutes);              }
-	if (seconds) { printf(" %lu seconds", seconds);              }
+	if (weeks)   { printf(" %lu weeks",   weeks);   hours = 0; minutes = 0; seconds = 0; }
+	if (days)    { printf(" %lu days",    days);               minutes = 0; seconds = 0; }
+	if (hours)   { printf(" %lu hours",   hours);                           seconds = 0; }
+	if (minutes) { printf(" %lu minutes", minutes);                                      }
+	if (seconds) { printf(" %lu seconds", seconds);                                      }
 	printf(")");
 
 	fflush(stdout);
