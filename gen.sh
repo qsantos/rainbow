@@ -50,6 +50,6 @@ do
 	for part in $(seq $min_part $max_part)
 	do
 		echo "Seed $red, part $part"
-		./rtgen $l_string $red $l_chains $n_chains $n_parts $part rt/${name}/${name}_${red}_${part}.rt
+		nice ./rtgen $l_string $red $l_chains $n_chains $n_parts $part rt/$name/${name}_${red}_$part.rt
 	done
 done
