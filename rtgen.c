@@ -147,7 +147,11 @@ int main(int argc, char** argv)
 
 	// finish generation
 	if (generate)
+	{
+		printf("Sorting table");
 		RTable_Sort(&rt);
+		rewriteLine();
+	}
 	else
 		printf("Pausing table generation (%lu chains generated)\n", rt.n_chains);
 
