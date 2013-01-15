@@ -16,12 +16,14 @@
 	exit(1);                      \
 }
 
+static char preload = 0; // active thread table preloading ?
+
 // some variables used internally by reverseHash()
-static RTable* rt     = NULL;
-static u32     n_rt   = 0;
-static char**  files  = NULL;
-static u32     cur_f = 0;
-static char*   bufstr = NULL;
+static u32     n_rt   = 0;    // the number of available tables
+static char**  files  = NULL; // the table file names
+static RTable* rt     = NULL; // the table being loaded
+static u32     cur_f  = 0;    // the identifier of the table being loaded
+static char*   bufstr = NULL; // some string buffer
 
 static RTable rt1;
 static RTable rt2;
@@ -35,19 +37,29 @@ static void* prepareNextTable(void* param)
 
 static char reverseHash(const char hash[16])
 {
-	// load first table
+	// preload first table
 	pthread_t prepThread;
-	pthread_create(&prepThread, NULL, prepareNextTable, NULL);
+	if (preload)
+		pthread_create(&prepThread, NULL, prepareNextTable, NULL);
 
 	cur_f = 0;
 	for (u32 i = 0; i < n_rt; i++)
 	{
-		// wait for current table to be loaded and
-		// initialize the loading of the next one
-		pthread_join(prepThread, NULL);
-		RTable* loaded = rt;
-		if (i < n_rt-1)
-			pthread_create(&prepThread, NULL, prepareNextTable, NULL);
+		RTable* loaded;
+		if (preload)
+		{
+			// wait for current table to be loaded and
+			// initialize the loading of the next one
+			pthread_join(prepThread, NULL);
+			loaded = rt;
+			if (i < n_rt-1)
+				pthread_create(&prepThread, NULL, prepareNextTable, NULL);
+		}
+		else
+		{
+			RTable_FromFile(&rt1, files[i]);
+			loaded = &rt1;
+		}
 
 		// use the current table
 		char res = RTable_Reverse(loaded, hash, bufstr);
@@ -56,7 +68,7 @@ static char reverseHash(const char hash[16])
 		// wait for the thread to finish and free the unused table
 		if (res)
 		{
-			if (i < n_rt-1)
+			if (preload && i < n_rt-1)
 			{
 				pthread_join(prepThread, NULL);
 				RTable_Delete(rt);
@@ -78,13 +90,17 @@ static void usage(int argc, char** argv)
 	(void) argc;
 
 	fprintf(stderr,
-		"Usage: %s TARGET src1 [src2 [...]]\n"
-		"Try and reverse one or several hashes\n"
+		"Usage: %s [OPTIONS] TARGET src1 [src2 [...]]\n"
+		"Try and reverse hashes\n"
+		"\n"
+		"OPTIONS:\n"
+		" -p, --preload    preload next table during computation\n"
+		"                  faster for long chains, uses twice as much of memory\n"
 		"\n"
 		"TARGET:\n"
 		" -x, --hash HASH  sets the target to HASH\n"
-		" -f, --file FILE  read the targets from FILE (- for stdin)\n"
-		" -r, --random N   targets are N random string hashes (bench)\n"
+		" -f, --file FILE  read the targets from FILE (- for stdin, one per line)\n"
+		" -r, --random N   targets are N random string hashes (benchmarking)\n"
 		,
 		argv[0]
 	);
@@ -111,14 +127,19 @@ int main(int argc, char** argv)
 		exit(0);
 	}
 
-	if (argc < 4)
+	int argn = 1;
+
+	// OPTIONS
+	char* ostr = argv[argn];
+	if (strcmp(ostr, "-p") == 0 || strcmp(ostr, "--preload") == 0)
 	{
-		usage(argc, argv);
-		exit(1);
+		preload = 1;
+		argn++;
 	}
 
+	// TARGET
 	Target ttype;
-	char* tstr = argv[1];
+	char* tstr = argv[argn++];
 	if (strcmp(tstr, "-x") == 0 || strcmp(tstr, "--hash") == 0)
 		ttype = T_HASH;
 	else if (strcmp(tstr, "-f") == 0 || strcmp(tstr, "--file") == 0)
@@ -128,15 +149,20 @@ int main(int argc, char** argv)
 	else
 		ERROR("Invalid target '%s'\n", tstr);
 
-	char* tparam = argv[2];
+	char* tparam = argv[argn++];
 
-	// load tables
-	n_rt  = argc-3;
-	files = argv + 3;
+	// table list
+	if (argn >= argc)
+	{
+		usage(argc, argv);
+		exit(1);
+	}
+	n_rt  = argc-argn;
+	files = argv + argn;
 
 	// some parameters
 	// TODO
-	RTable_FromFile(&rt1, argv[4]);
+	RTable_FromFile(&rt1, files[0]);
 	u32   l_string  = rt1.l_string;
 	char* charset   = rt1.charset;
 	u32   n_charset = rt1.n_charset;
