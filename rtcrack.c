@@ -3,6 +3,7 @@
 #include <string.h>
 #include <assert.h>
 #include <time.h>
+#include <pthread.h>
 
 #include "md5.h"
 #include "rainbow.h"
@@ -19,27 +20,50 @@
 static RTable* rt     = NULL;
 static u32     n_rt   = 0;
 static char**  files  = NULL;
+static u32     cur_f = 0;
 static char*   bufstr = NULL;
+
+static RTable rt1;
+static RTable rt2;
+static void* prepareNextTable(void* param)
+{
+	(void) param;
+	rt = rt == &rt1 ? &rt2 : &rt1;
+	RTable_FromFile(rt, files[cur_f++]);
+	return NULL;
+}
 
 static char reverseHash(const char hash[16])
 {
-	if (files)
+	// load first table
+	pthread_t prepThread;
+	pthread_create(&prepThread, NULL, prepareNextTable, NULL);
+
+	cur_f = 0;
+	for (u32 i = 0; i < n_rt; i++)
 	{
-		for (u32 i = 0; i < n_rt; i++)
+		// wait for current table to be loaded and
+		// initialize the loading of the next one
+		pthread_join(prepThread, NULL);
+		RTable* loaded = rt;
+		pthread_create(&prepThread, NULL, prepareNextTable, NULL);
+
+		// use the current table
+		char res = RTable_Reverse(loaded, hash, bufstr);
+		RTable_Delete(loaded);
+
+		// see END
+		if (res)
 		{
-			RTable_FromFile(rt, files[i]);
-			char res = RTable_Reverse(rt, hash, bufstr);
+			pthread_join(prepThread, NULL);
 			RTable_Delete(rt);
-			if (res)
-				return 1;
+			return 1;
 		}
 	}
-	else
-	{
-		for (u32 i = 0; i < n_rt; i++)
-			if (RTable_Reverse(&rt[i], hash, bufstr))
-				return 1;
-	}
+
+	// END: wait for the thread to finish and free the unused table
+	pthread_join(prepThread, NULL);
+	RTable_Delete(rt);
 	return 0;
 }
 
@@ -106,29 +130,16 @@ int main(int argc, char** argv)
 	char* tparam = argv[2];
 
 	// load tables
-	n_rt = argc-3;
-	if (1) // load the tables one after another for each reversing
-	{
-		rt = malloc(sizeof(RTable));
-		files = argv + 3;
-		assert(rt);
-	}
-	else
-	{
-		rt = malloc(sizeof(RTable) * n_rt);
-		assert(rt);
-		for (u32 i = 0; i < n_rt; i++)
-			if (!RTable_FromFile(&rt[i], argv[i+3]))
-				ERROR("Could no load table '%s'\n", argv[i+3])
-	}
+	n_rt  = argc-3;
+	files = argv + 3;
 
 	// some parameters
 	// TODO
-	RTable_FromFile(rt, argv[4]);
-	u32   l_string  = rt[0].l_string;
-	char* charset   = rt[0].charset;
-	u32   n_charset = rt[0].n_charset;
-	RTable_Delete(rt);
+	RTable_FromFile(&rt1, argv[4]);
+	u32   l_string  = rt1.l_string;
+	char* charset   = rt1.charset;
+	u32   n_charset = rt1.n_charset;
+	RTable_Delete(&rt1);
 
 	// some buffers
 	char hash[16];
@@ -198,11 +209,6 @@ int main(int argc, char** argv)
 		printf("\n");
 	}
 	free(bufstr);
-
-	if (!files)
-		for (u32 i = 0; i < n_rt; i++)
-			RTable_Delete(&rt[i]);
-	free(rt);
 
 	return 0;
 }
