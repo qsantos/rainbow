@@ -46,24 +46,25 @@ static char reverseHash(const char hash[16])
 		// initialize the loading of the next one
 		pthread_join(prepThread, NULL);
 		RTable* loaded = rt;
-		pthread_create(&prepThread, NULL, prepareNextTable, NULL);
+		if (i < n_rt-1)
+			pthread_create(&prepThread, NULL, prepareNextTable, NULL);
 
 		// use the current table
 		char res = RTable_Reverse(loaded, hash, bufstr);
 		RTable_Delete(loaded);
 
-		// see END
+		// wait for the thread to finish and free the unused table
 		if (res)
 		{
-			pthread_join(prepThread, NULL);
-			RTable_Delete(rt);
+			if (i < n_rt-1)
+			{
+				pthread_join(prepThread, NULL);
+				RTable_Delete(rt);
+			}
 			return 1;
 		}
 	}
 
-	// END: wait for the thread to finish and free the unused table
-	pthread_join(prepThread, NULL);
-	RTable_Delete(rt);
 	return 0;
 }
 
