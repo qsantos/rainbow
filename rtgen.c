@@ -18,17 +18,31 @@ static void stopGenerating(int signal)
 	generate = 0;
 }
 
-static void progress(float ratio, time_t started)
+static void progress(float ratio)
 {
-	// compute ETA
-	time_t seconds = (time(NULL) - started) * (1/ratio - 1);
+	// compute the total elapsed time and
+	// elapsed time since last progress() call
+	static time_t started = 0;
+	static time_t last    = 0;
+	if (!started)
+	{
+		started = time(NULL);
+		return;
+	}
+	time_t cur = time(NULL);
+	if (last == cur)
+		return;
+	last = cur;
+
+	// compute seconds, minutes, hurs, days and weeks
+	time_t seconds = (cur - started) * (1/ratio - 1);
 	time_t minutes = seconds / 60; seconds %= 60;
 	time_t hours   = minutes / 60; minutes %= 60;
 	time_t days    = hours   / 24; hours   %= 24;
 	time_t weeks   = days    /  7; days    %=  7;
 
+	// print it
 	rewriteLine();
-
 	printf("Progress: %.2f%% (ETA:", 100 * ratio);
 	if (weeks)   { printf(" %lu weeks",   weeks);   hours = 0; minutes = 0; seconds = 0; }
 	if (days)    { printf(" %lu days",    days);               minutes = 0; seconds = 0; }
@@ -36,7 +50,6 @@ static void progress(float ratio, time_t started)
 	if (minutes) { printf(" %lu minutes", minutes);                                      }
 	if (seconds) { printf(" %lu seconds", seconds);                                      }
 	printf(")");
-
 	fflush(stdout);
 }
 
@@ -116,9 +129,7 @@ int main(int argc, char** argv)
 		RTable_New(&rt, l_string, charset, s_reduce, l_chains, n_chains);
 	srandom(time(NULL));
 
-	u32    startNChains = rt.n_chains;
-	time_t started      = time(NULL);
-	time_t last         = 0;
+	u32 startNChains = rt.n_chains;
 
 	// generate more chains
 	signal(SIGINT, stopGenerating);
@@ -135,13 +146,9 @@ int main(int argc, char** argv)
 			printf("Nothing more to do\n");
 			generate = 0;
 		}
-		else if (time(NULL) - last)
-		{
-			last = time(NULL);
-			float ratio = rt.n_chains - startNChains;
-			ratio      /= rt.a_chains - startNChains;
-			progress(ratio, started);
-		}
+		float ratio = rt.n_chains - startNChains;
+		ratio      /= rt.a_chains - startNChains;
+		progress(ratio);
 	}
 	rewriteLine();
 
