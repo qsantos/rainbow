@@ -53,6 +53,7 @@ static void reverseHashes(char** hashes, size_t count, char verbose)
 
 	size_t done = 0;
 	cur_f = 0;
+	printf("0 / %zu\n", count);
 	for (u32 i = 0; i < n_rt; i++)
 	{
 		RTable* loaded;
@@ -91,7 +92,7 @@ static void reverseHashes(char** hashes, size_t count, char verbose)
 				else
 				{
 					rewriteLine();
-					printf("%u / %u", done, count);
+					printf("%zu / %zu", done, count);
 					fflush(stdout);
 				}
 				hash[16] = 1;
