@@ -82,6 +82,8 @@ static void reverseHashes(char** hashes, size_t count, char verbose)
 			char res = RTable_Reverse(loaded, hash, bufstr);
 			if (res)
 			{
+				hash[16] = 1;
+				done++;
 				if (verbose)
 				{
 					printHash(hash, 16);
@@ -95,8 +97,6 @@ static void reverseHashes(char** hashes, size_t count, char verbose)
 					printf("%zu / %zu", done, count);
 					fflush(stdout);
 				}
-				hash[16] = 1;
-				done++;
 			}
 		}
 		RTable_Delete(loaded);
