@@ -16,9 +16,14 @@
 	exit(1);                      \
 }
 
+static inline void rewriteLine(void)
+{
+	printf("\r\33[K");
+}
+
 static char preload = 0; // active thread table preloading ?
 
-// some variables used internally by reverseHash()
+// some variables used internally by reverseHashes()
 static u32     n_rt   = 0;    // the number of available tables
 static char**  files  = NULL; // the table file names
 static RTable* rt     = NULL; // the table being loaded
@@ -35,13 +40,18 @@ static void* prepareNextTable(void* param)
 	return NULL;
 }
 
-static char reverseHash(const char hash[16])
+// hashes have 16 byte to decribe the value
+// and one for the status (pending or solved)
+// if verbose is set, print each reversed hash
+// otherwise, just display a progress status
+static void reverseHashes(char** hashes, size_t count, char verbose)
 {
 	// preload first table
 	pthread_t prepThread;
 	if (preload)
 		pthread_create(&prepThread, NULL, prepareNextTable, NULL);
 
+	size_t done = 0;
 	cur_f = 0;
 	for (u32 i = 0; i < n_rt; i++)
 	{
@@ -62,27 +72,48 @@ static char reverseHash(const char hash[16])
 		}
 
 		// use the current table
-		char res = RTable_Reverse(loaded, hash, bufstr);
+		for (size_t j = 0; j < count; j++)
+		{
+			char* hash = hashes[j];
+			if (hash[16])
+				continue;
+
+			char res = RTable_Reverse(loaded, hash, bufstr);
+			if (res)
+			{
+				if (verbose)
+				{
+					printHash(hash, 16);
+					printf(" ");
+					printString(bufstr, loaded->l_string);
+					printf("\n");
+				}
+				else
+				{
+					rewriteLine();
+					printf("%u / %u", done, count);
+					fflush(stdout);
+				}
+				hash[16] = 1;
+				done++;
+			}
+		}
 		RTable_Delete(loaded);
 
-		// wait for the thread to finish and free the unused table
-		if (res)
+		// wait for the thread to finish and free
+		// the unused table before returning
+		if (done == count)
 		{
 			if (preload && i < n_rt-1)
 			{
 				pthread_join(prepThread, NULL);
 				RTable_Delete(rt);
 			}
-			return 1;
+			break;
 		}
 	}
-
-	return 0;
-}
-
-static inline void rewriteLine(void)
-{
-	printf("\r\33[K");
+	if (!verbose)
+		printf("\n");
 }
 
 static void usage(int argc, char** argv)
@@ -168,8 +199,9 @@ int main(int argc, char** argv)
 	u32   n_charset = rt1.n_charset;
 	RTable_Delete(&rt1);
 
-	// some buffers
-	char hash[16];
+	// some share variables
+	size_t n_hashes;
+	char** hashes;
 	bufstr = malloc(l_string);
 	assert(bufstr);
 
@@ -177,63 +209,78 @@ int main(int argc, char** argv)
 	switch (ttype)
 	{
 	case T_HASH:
+		(void) 0;
+		char* hash = (char*) malloc(17);;
+		assert(hash);
 		hex2hash(tparam, hash, 16);
-		if (reverseHash(hash))
-		{
-			printHash(hash, 16);
-			printf(" ");
-			printString(bufstr, l_string);
-			printf("\n");
-		}
-		else
-			printf("Could not reverse hash\n");
+		hash[16] = 0; // pending
 
+		reverseHashes(&hash, 1, 1);
+
+		free(hash);
 		break;
 	case T_FILE:
 		(void) 0;
 		FILE* f = strcmp(tparam, "-") == 0 ? stdin : fopen(tparam, "r");
 		assert(f);
 
+		n_hashes = 0;
+		size_t a_hashes = 1;
+		hashes = (char**) malloc(sizeof(char*));
+		assert(hashes);
+
+		char* line = NULL;
+		size_t n_line = 0;
 		while (1)
 		{
-			char hashstr[33];
-			fread(hashstr, 1, 33, f);
-			if (feof(f))
-				break;
+			getline(&line, &n_line, f);
+			if (line[0] == '#') // ignore comments
+				continue;
 
-			hex2hash(hashstr, hash, 16);
-			if (reverseHash(hash))
+			if (strlen(line) < 33) // ignore too short lines
+				continue;
+
+			if (n_hashes >= a_hashes)
 			{
-				printHash(hash, 16);
-				printf(" ");
-				printString(bufstr, l_string);
-				printf("\n");
+				a_hashes *= 2;
+				hashes = (char**) realloc(hashes, sizeof(char*) * a_hashes);
+				assert(hashes);
 			}
-			else
-				printf("Could not reverse hash\n");
-		}
 
+			char* hash = (char*) malloc(17);
+			assert(hash);
+			hex2hash(line, hash, 16);
+			hash[16] = 0; // pending
+			hashes[n_hashes++] = hash;
+		}
 		fclose(f);
+
+		reverseHashes(hashes, n_hashes, 1);
+
+		for (size_t i = 0; i < n_hashes; i++)
+			free(hashes[i]);
+		free(hashes);
 		break;
 	case T_RAND:
 		srandom(time(NULL));
-		u32 n = atoi(tparam);
-		u32 n_crack = 0;
-		for (u32 i = 0; i < n; i++)
+		n_hashes = atoi(tparam);
+		hashes = (char**) malloc(sizeof(char*) * n_hashes);
+		assert(hashes);
+		for (size_t i = 0; i < n_hashes; i++)
 		{
-			for (u32 j = 0; j < l_string; j++)
+			char* hash = hashes[i] = (char*) malloc(17);
+			for (size_t j = 0; j < l_string; j++)
 				bufstr[j] = charset[random() % n_charset];
-
-			char hash[16];
 			MD5((u8*) hash, (u8*) bufstr, l_string);
-			if (reverseHash(hash))
-				n_crack++;
-
-			rewriteLine();
-			printf("%lu / %lu", n_crack, i+1);
-			fflush(stdout);
+			hash[16] = 0; // pending
 		}
-		printf("\n");
+
+		reverseHashes(hashes, n_hashes, 0);
+
+		for (size_t i = 0; i < n_hashes; i++)
+			free(hashes[i]);
+		free(hashes);
+		break;
 	}
 	free(bufstr);
 
