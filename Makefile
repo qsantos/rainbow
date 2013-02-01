@@ -1,11 +1,11 @@
 CC      = gcc
 CFLAGS  = -Wall -Wextra -Werror -pedantic -std=c99 -O3 -D_XOPEN_SOURCE=700 -g
 LDFLAGS = -O3 -lm -lpthread
-TARGETS = rtgen rtcrack rtkey
+TARGETS = rtgen rtcrack
 
 all: $(TARGETS)
 
-rt%: rt%.o md5.o rainbow.o
+rt%: rt%.o md5.o rtable.o
 	@mkdir -p $(@D)
 	$(CC) $(LDFLAGS) $^ -o $@
 

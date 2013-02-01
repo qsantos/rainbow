@@ -6,7 +6,7 @@
 #include <pthread.h>
 
 #include "md5.h"
-#include "rainbow.h"
+#include "rtable.h"
 
 #define ERROR(...)                    \
 {                                     \

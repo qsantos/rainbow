@@ -1,5 +1,5 @@
-#ifndef RAINBOW_H
-#define RAINBOW_H
+#ifndef RTABLE_H
+#define RTABLE_H
 
 // a chain is made of a status byte, a hash and a string
 // the length of a chain is therefore 1+l_hash+l_string (sizeofChain)

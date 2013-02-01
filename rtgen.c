@@ -4,7 +4,7 @@
 #include <signal.h>
 #include <time.h>
 
-#include "rainbow.h"
+#include "rtable.h"
 
 static inline void rewriteLine(void)
 {
@@ -90,7 +90,7 @@ static void usage(int argc, char** argv)
 		argv[0],
 		argv[0],
 		argv[0],
-		argv[0]
+		argv[0]  // "ISO C does not support %n$ operand number formats"
 	);
 }
 
