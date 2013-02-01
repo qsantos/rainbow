@@ -125,7 +125,7 @@ void RTable_Sort(RTable* rt)
 
 void RTable_ToFile(RTable* rt, const char* filename)
 {
-	FILE* f = filename ? fopen(filename, "w") : stdout;
+	FILE* f = fopen(filename, "w");
 	if (!f)
 	{
 		fprintf(stderr, "Could not open '%s'\n", filename);
@@ -151,7 +151,7 @@ void RTable_ToFile(RTable* rt, const char* filename)
 
 char RTable_FromFile(RTable* rt, const char* filename)
 {
-	FILE* f = filename ? fopen(filename, "r") : stdin;
+	FILE* f = fopen(filename, "r");
 	if (!f)
 		return 0;
 
