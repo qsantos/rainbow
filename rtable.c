@@ -56,7 +56,7 @@ static u32 HashFun(const char* str, u32 len);
 static u32 RTable_HFind(RTable* rt, const char* str)
 {
 	u32 cur = HashFun(str, rt->l_string) % rt->a_chains;
-	while (CACTIVE(cur) && bstrncmp(CHASH(cur), str, rt->l_string) != 0)
+	while (CACTIVE(cur) && memcmp(CHASH(cur), str, rt->l_string) != 0)
 		if (++cur >= rt->a_chains)
 			cur = 0;
 	return cur;
@@ -108,7 +108,7 @@ static void quicksort(RTable* rt, u32 left, u32 right)
 	char* pivotValue = CHASH(right);
 	u32 storeIndex = left;
 	for (u32 i = left; i < right; i++)
-		if (bstrncmp(CHASH(i), pivotValue, rt->l_hash) < 0)
+		if (memcmp(CHASH(i), pivotValue, rt->l_hash) < 0)
 			swap(rt, i, storeIndex++);
 
 	swap(rt, storeIndex, right);
@@ -179,18 +179,6 @@ char RTable_FromFile(RTable* rt, const char* filename)
 	return 1;
 }
 
-void RTable_Print(RTable* rt)
-{
-	for (u32 i = 0; i < rt->a_chains; i++)
-	{
-		printHash(CHASH(i), rt->l_hash);
-		printf(" ");
-		printString(CSTR(i), rt->l_string);
-		printf("\n");
-	}
-}
-
-
 static s32 binaryFind(RTable* rt, const char* hash)
 {
 	u32 start = 0;
@@ -198,12 +186,12 @@ static s32 binaryFind(RTable* rt, const char* hash)
 	while (start != end)
 	{
 		u32 middle = (start + end) / 2;
-		if (bstrncmp(hash, CHASH(middle), rt->l_hash) <= 0)
+		if (memcmp(hash, CHASH(middle), rt->l_hash) <= 0)
 			end = middle;
 		else
 			start = middle + 1;
 	}
-	if (bstrncmp(CHASH(start), hash, rt->l_hash) == 0)
+	if (memcmp(CHASH(start), hash, rt->l_hash) == 0)
 		return start;
 	else
 		return -1;
@@ -236,7 +224,7 @@ char RTable_Reverse(RTable* rt, const char* hash, char* dst)
 		}
 
 		// check for its hash
-		if (bstrncmp(rt->bufhash, hash, rt->l_hash) == 0)
+		if (memcmp(rt->bufhash, hash, rt->l_hash) == 0)
 		{
 			if (dst)
 				memcpy(dst, rt->bufstr, rt->l_string);
@@ -251,39 +239,6 @@ void RTable_Reduce(RTable* rt, u32 step, const char* hash, char* str)
 	step += rt->s_reduce;
 	for (u32 j = 0; j < rt->l_string; j++, str++, hash++, step>>=8)
 		*str = rt->charset[(u8)(*hash ^ step) % rt->n_charset];
-}
-
-char bstrncmp(const char* a, const char* b, u32 n)
-{
-	for (u32 i = 0; i < n; i++, a++, b++)
-		if (*a != *b)
-			return *(u8*)a < *(u8*)b ? -1 : 1;
-	return 0;
-}
-
-void hex2hash(const char* hex, char* hash, u32 l_hash)
-{
-	for (u32 i = 0; i < l_hash; i++)
-	{
-		*hash  = *hex - (*hex <= '9' ? '0' : 87);
-		hex++;
-		*hash *= 16;
-		*hash += *hex - (*hex <= '9' ? '0' : 87);
-		hex++;
-		hash++;
-	}
-}
-
-void printHash(const char* hash, u32 l_hash)
-{
-	for (u32 i = 0; i < l_hash; i++, hash++)
-		printf("%.2x", (u8) *hash);
-}
-
-void printString(const char* str, u32 l_string)
-{
-	for (u32 j = 0; j < l_string; j++, str++)
-		printf("%c", *str);
 }
 
 char index2key(u64 index, char* key, u32 l_min, u32 l_max, const char* charset, u32 n_charset)

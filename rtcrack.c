@@ -6,7 +6,8 @@
 #include <pthread.h>
 
 #include "md5.h"
-#include "rtable.h"
+#include "crack.h"
+#include "utils.h"
 
 #define ERROR(...)                    \
 {                                     \
@@ -14,11 +15,6 @@
 	fprintf(stderr, "\n");        \
 	usage(argc, argv);            \
 	exit(1);                      \
-}
-
-static inline void rewriteLine(void)
-{
-	printf("\r\33[K");
 }
 
 static char preload = 0; // active thread table preloading ?
@@ -86,7 +82,7 @@ static void reverseHashes(char** hashes, size_t count, char verbose)
 				done++;
 				if (verbose)
 				{
-					printHash(hash, 16);
+					printHexaBin(hash, 16);
 					printf(" ");
 					printString(bufstr, loaded->l_string);
 					printf("\n");
@@ -213,7 +209,7 @@ int main(int argc, char** argv)
 		(void) 0;
 		char* hash = (char*) malloc(17);;
 		assert(hash);
-		hex2hash(tparam, hash, 16);
+		hex2bin(hash, tparam, 16);
 		hash[16] = 0; // pending
 
 		reverseHashes(&hash, 1, 1);
@@ -250,7 +246,7 @@ int main(int argc, char** argv)
 
 			char* hash = (char*) malloc(17);
 			assert(hash);
-			hex2hash(line, hash, 16);
+			hex2bin(hash, line, 16);
 			hash[16] = 0; // pending
 			hashes[n_hashes++] = hash;
 		}

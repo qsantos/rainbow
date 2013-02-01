@@ -50,18 +50,12 @@ void RTable_Sort    (RTable* rt);
 void RTable_ToFile  (RTable* rt, const char* filename);
 char RTable_FromFile(RTable* rt, const char* filename);
 
-// misc
-void RTable_Print  (RTable* rt);
 char RTable_Reverse(RTable* rt, const char* hash, char* dst);
 
 // internal use
 void RTable_Reduce(RTable* rt, u32 step, const char* hash, char* str); // hash to string reduce function
 
 // useful functions
-char bstrncmp   (const char* a, const char* b, u32 n);
-void hex2hash   (const char* hex, char* hash, u32 l_hash);
-void printHash  (const char* hash, u32 l_hash);
-void printString(const char* str, u32 l_string);
 char index2key  (u64 index, char* key, u32 l_min, u32 l_max, const char* charset, u32 n_charset);
 
 #endif
