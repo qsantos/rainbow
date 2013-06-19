@@ -231,6 +231,9 @@ int main(int argc, char** argv)
 		while (1)
 		{
 			getline(&line, &n_line, f);
+			if (feof(f))
+				break;
+
 			if (line[0] == '#') // ignore comments
 				continue;
 
