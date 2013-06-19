@@ -48,17 +48,15 @@ void MD5Init(MD5_CTX* md5)
 #define H(X,Y,Z) ((X) ^ (Y) ^ (Z))
 #define I(X,Y,Z) ((Y) ^ ((X) | ~(Z)))
 #define ROT(x,n) (((x) << n) | ((x) >> (32-n)))
-#define OP(f,a,b,c,d,k,s,i) md5->a = md5->b + ROT(md5->a + f(md5->b,md5->c,md5->d) + X[k] + T[i], s);
+#define OP(f,a,b,c,d,k,s,i) a = b + ROT(a + f(b,c,d) + X[k] + T[i], s);
 void MD5Block(MD5_CTX* md5, const uint8_t block[64])
 {
-	uint32_t X[16];
-	for (uint8_t i = 0; i < 16; i++)
-		X[i] = (block[i*4] << 0) | (block[i*4+1] << 8) | (block[i*4+2] << 16) | (block[i*4+3] << 24);
+	uint32_t* X = (uint32_t*) block;
 
-	uint32_t AA = md5->A;
-	uint32_t BB = md5->B;
-	uint32_t CC = md5->C;
-	uint32_t DD = md5->D;
+	uint32_t A = md5->A;
+	uint32_t B = md5->B;
+	uint32_t C = md5->C;
+	uint32_t D = md5->D;
 
 	OP(F,A,B,C,D,  0, 7, 1)  OP(F,D,A,B,C,  1,12, 2)  OP(F,C,D,A,B,  2,17, 3)  OP(F,B,C,D,A,  3,22, 4)
 	OP(F,A,B,C,D,  4, 7, 5)  OP(F,D,A,B,C,  5,12, 6)  OP(F,C,D,A,B,  6,17, 7)  OP(F,B,C,D,A,  7,22, 8)
@@ -80,10 +78,10 @@ void MD5Block(MD5_CTX* md5, const uint8_t block[64])
 	OP(I,A,B,C,D,  8, 6,57)  OP(I,D,A,B,C, 15,10,58)  OP(I,C,D,A,B,  6,15,59)  OP(I,B,C,D,A, 13,21,60)
 	OP(I,A,B,C,D,  4, 6,61)  OP(I,D,A,B,C, 11,10,62)  OP(I,C,D,A,B,  2,15,63)  OP(I,B,C,D,A,  9,21,64)
 
-	md5->A += AA;
-	md5->B += BB;
-	md5->C += CC;
-	md5->D += DD;
+	md5->A += A;
+	md5->B += B;
+	md5->C += C;
+	md5->D += D;
 
 	// TODO : true clearing
 }
