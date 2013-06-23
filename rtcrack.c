@@ -1,5 +1,5 @@
 /*\
- *  This is an awesome programm simulating awesome battles of awesome robot tanks
+ *  Implementation of rainbow tables for hash cracking
  *  Copyright (C) 2012-2013 Quentin SANTOS
  *
  *  This program is free software: you can redistribute it and/or modify
