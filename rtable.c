@@ -111,34 +111,18 @@ char RTable_StartAt(RTable* rt, u64 index)
 	return RTable_AddChain(rt, rt->bufhash, rt->curstr);
 }
 
-static void swap(RTable* rt, u32 a, u32 b)
+static u32 cmp_l_hash = 0;
+int rtable_cmp(const void* a, const void* b)
 {
-	memcpy(rt->bufchain,                   rt->chains + a*rt->sizeofChain, rt->sizeofChain);
-	memcpy(rt->chains + a*rt->sizeofChain, rt->chains + b*rt->sizeofChain, rt->sizeofChain);
-	memcpy(rt->chains + b*rt->sizeofChain, rt->bufchain,                   rt->sizeofChain);
+	const char* ca = (const char*) a;
+	const char* cb = (const char*) b;
+
+	return memcmp(ca+1, cb+1, cmp_l_hash);
 }
-static void quicksort(RTable* rt, u32 left, u32 right)
-{
-	if (left >= right)
-		return;
-
-	swap(rt, (left+right)/2, right);
-	char* pivotValue = CHASH(right);
-	u32 storeIndex = left;
-	for (u32 i = left; i < right; i++)
-		if (memcmp(CHASH(i), pivotValue, rt->l_hash) < 0)
-			swap(rt, i, storeIndex++);
-
-	swap(rt, storeIndex, right);
-
-	if (storeIndex)
-		quicksort(rt, left, storeIndex-1);
-	quicksort(rt, storeIndex+1, right);
-}
-
 void RTable_Sort(RTable* rt)
 {
-	quicksort(rt, 0, rt->a_chains-1);
+	cmp_l_hash = rt->l_hash;
+	qsort(rt->chains, rt->a_chains, rt->sizeofChain, rtable_cmp);
 }
 
 void RTable_ToFile(RTable* rt, const char* filename)
