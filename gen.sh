@@ -34,17 +34,8 @@ fi
 # base name of the files to be generated
 name=alnum_${l_string}_${l_chains}_${n_chains}_${n_parts}
 
-# create directory the files will be stored in
-if [ ! -e rt ]
-then
-	mkdir rt
-fi
-if [ ! -e rt/$name ]
-then
-	mkdir rt/$name
-fi
-
 # create the files
+mkdir -p rt/$name
 for red in $(seq $min_red $max_red)
 do
 	for part in $(seq $min_part $max_part)
