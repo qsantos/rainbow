@@ -151,8 +151,6 @@ int main(int argc, char** argv)
 
 	// generate more chains
 	signal(SIGINT, stopGenerating);
-	u32 progressStep = rt.a_chains / 10000;
-	if (!progressStep) progressStep = 1;
 	u64 startPointIdx = part;
 	while (generate && rt.n_chains < rt.a_chains)
 	{
