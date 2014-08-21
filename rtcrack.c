@@ -98,6 +98,7 @@ static void reverseHashes(char** hashes, size_t count, char verbose)
 			{
 				hash[16] = 1;
 				done++;
+				rewriteLine();
 				if (verbose)
 				{
 					printHexaBin(hash, 16);
@@ -107,7 +108,6 @@ static void reverseHashes(char** hashes, size_t count, char verbose)
 				}
 				else
 				{
-					rewriteLine();
 					printf("%zu / %zu", done, count);
 					fflush(stdout);
 				}
